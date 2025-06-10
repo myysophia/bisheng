@@ -265,3 +265,4 @@ sftp-config.json
 docker/data/*
 docker/mysql/data/*
 docker/office/bisheng/*.gz
+.history
