@@ -1,9 +1,9 @@
 {
-  "title": "BISHENG",
+  "title": "E-Agent",
   "prompt": "提示",
   "login": {
-    "slogen": "便捷、灵活、可靠的企业级大模型应用开发平台",
-    "bottomText": "文擎毕昇",
+    "slogen": "便捷、灵活、可靠的教育智能体应用开发平台",
+    "bottomText": "文擎唐数",
     "account": "邮箱",
     "password": "密码",
     "confirmPassword": "确认密码",
