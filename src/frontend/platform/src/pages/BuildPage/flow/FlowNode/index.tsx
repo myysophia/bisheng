@@ -173,7 +173,7 @@ function CustomNode({ data: node, selected, isConnectable }: { data: WorkflowNod
                 <RunLog node={node}>
                     <div className='bisheng-node-top flex items-center'>
                         <LoadingIcon className='size-5 text-[#B3BBCD]' />
-                        <span className='text-sm text-[#B3BBCD]'>BISHENG</span>
+                        <span className='text-sm text-[#B3BBCD]'>E-Agent</span>
                     </div>
                 </RunLog>
 
