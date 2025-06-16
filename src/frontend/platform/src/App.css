@@ -381,7 +381,7 @@
 }
 
 .flow-bg-logo::before {
-	content: "E-Agent"; /* 设置文字内容 */
+	content: "BISHENG"; /* 设置文字内容 */
 	font-size: 180px;
 	font-weight: bold;
 	color: rgba(232, 235, 242, 0.7);
