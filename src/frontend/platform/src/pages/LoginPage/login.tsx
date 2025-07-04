@@ -1,35 +1,26 @@
-import { BookOpenIcon } from '@/components/bs-icons/bookOpen';
-import { GithubIcon } from '@/components/bs-icons/github';
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import json from "../../../package.json";
-import { Button } from "../../components/bs-ui/button";
-import { Input } from "../../components/bs-ui/input";
 // import { alertContext } from "../contexts/alertContext";
 import { useToast } from "@/components/bs-ui/toast/use-toast";
 import { useNavigate } from 'react-router-dom';
-import { getCaptchaApi, loginApi, registerApi } from "../../controllers/API/user";
+import { getCaptchaApi, loginApi } from "../../controllers/API/user";
 import { captureAndAlertRequestErrorHoc } from "../../controllers/request";
-import LoginBridge from './loginBridge';
-import { PWD_RULE, handleEncrypt, handleLdapEncrypt } from './utils';
-import { locationContext } from '@/contexts/locationContext';
+import { handleEncrypt, handleLdapEncrypt } from './utils';
 import { ldapLoginApi } from '@/controllers/API/pro';
+import './loginv2.css';
 
 export const LoginPage = () => {
     // const { setErrorData, setSuccessData } = useContext(alertContext);
     const { t, i18n } = useTranslation();
     const { message, toast } = useToast()
     const navigate = useNavigate()
-    const { appConfig } = useContext(locationContext)
 
     const isLoading = false
 
     const mailRef = useRef(null)
     const pwdRef = useRef(null)
-    const agenPwdRef = useRef(null)
 
-    // login or register
-    const [showLogin, setShowLogin] = useState(true)
 
     // captcha
     const captchaRef = useRef(null)
@@ -44,6 +35,121 @@ export const LoginPage = () => {
     };
 
     const [isLDAP, setIsLDAP] = useState(false)
+
+    useEffect(() => {
+        const canvas = document.getElementById('particle-canvas') as HTMLCanvasElement;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+        let particlesArray: Particle[];
+
+        const setCanvasSize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        setCanvasSize();
+
+        let mouse = { x: null as number | null, y: null as number | null, radius: (canvas.height/120) * (canvas.width/120) };
+
+        const mouseMove = (event: MouseEvent) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        };
+        window.addEventListener('mousemove', mouseMove);
+
+        class Particle {
+            x: number; y: number; directionX: number; directionY: number; size: number; color: string;
+            constructor(x: number, y: number, directionX: number, directionY: number, size: number, color: string) {
+                this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY; this.size = size; this.color = color;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                let dx = (mouse.x ?? 0) - this.x;
+                let dy = (mouse.y ?? 0) - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius + this.size){
+                    if((mouse.x ?? 0) < this.x && this.x < canvas.width - this.size * 10) { this.x += 5; }
+                    if((mouse.x ?? 0) > this.x && this.x > this.size * 10) { this.x -= 5; }
+                    if((mouse.y ?? 0) < this.y && this.y < canvas.height - this.size * 10) { this.y += 5; }
+                    if((mouse.y ?? 0) > this.y && this.y > this.size * 10) { this.y -= 5; }
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * .4) - .2;
+                let directionY = (Math.random() * .4) - .2;
+                let color = 'rgba(14, 165, 233, 0.6)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                                 + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width/7) * (canvas.height/7)) {
+                        opacityValue = 1 - (distance/20000);
+                        ctx.strokeStyle = `rgba(14, 165, 233, ${opacityValue})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        let animationId: number;
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        const onResize = () => {
+            setCanvasSize();
+            mouse.radius = (canvas.height/120) * (canvas.width/120);
+            init();
+        };
+        window.addEventListener('resize', onResize);
+        const onMouseOut = () => { mouse.x = undefined as any; mouse.y = undefined as any; };
+        window.addEventListener('mouseout', onMouseOut);
+
+        init();
+        animate();
+        return () => {
+            cancelAnimationFrame(animationId);
+            window.removeEventListener('resize', onResize);
+            window.removeEventListener('mousemove', mouseMove);
+            window.removeEventListener('mouseout', onMouseOut);
+        };
+    }, []);
     const handleLogin = async () => {
         const error = []
         const [mail, pwd] = [mailRef.current.value, pwdRef.current.value]
@@ -82,145 +188,56 @@ export const LoginPage = () => {
         fetchCaptchaData()
     }
 
-    const handleRegister = async () => {
-        const error = []
-        const [mail, pwd, apwd] = [mailRef.current.value, pwdRef.current.value, agenPwdRef.current.value]
-        if (!mail) {
-            error.push(t('login.pleaseEnterAccount'))
-        }
-        if (mail.length < 3) {
-            error.push(t('login.accountTooShort'))
-        }
-        if (!/.{8,}/.test(pwd)) {
-            error.push(t('login.passwordTooShort'))
-        }
-        if (!PWD_RULE.test(pwd)) {
-            error.push(t('login.passwordError'))
-        }
-        if (pwd !== apwd) {
-            error.push(t('login.passwordMismatch'))
-        }
-        if (captchaData.user_capthca && !captchaRef.current.value) {
-            error.push(t('login.pleaseEnterCaptcha'))
-        }
-        if (error.length) {
-            return message({
-                title: `${t('prompt')}`,
-                variant: 'warning',
-                description: error
-            })
-        }
-        const encryptPwd = await handleEncrypt(pwd)
-        captureAndAlertRequestErrorHoc(registerApi(mail, encryptPwd, captchaData.captcha_key, captchaRef.current?.value).then(res => {
-            // setSuccessData({ title: t('login.registrationSuccess') })
-            message({
-                title: `${t('prompt')}`,
-                variant: 'success',
-                description: [t('login.registrationSuccess')]
-            })
-            pwdRef.current.value = ''
-            setShowLogin(true)
-        }))
 
-        fetchCaptchaData()
-    }
-
-    return <div className='w-full h-full bg-background-dark'>
-        <div className='fixed z-10 sm:w-[1280px] w-full sm:h-[720px] h-full translate-x-[-50%] translate-y-[-50%] left-[50%] top-[50%] border rounded-lg shadow-xl overflow-hidden bg-background-login'>
-            <div className='w-[420px] h-[704px] m-[8px] hidden sm:block relative z-20'>
-                <img src={__APP_ENV__.BASE_URL + '/login-logo-big.png'} alt="logo_picture" className='w-full h-full dark:hidden' />
-                <img src={__APP_ENV__.BASE_URL + '/login-logo-dark.png'} alt="logo_picture" className='w-full h-full hidden dark:block' />
-                {/* <iframe src={__APP_ENV__.BASE_URL + '/face.html'} className='w-full h-full'></iframe> */}
-            </div>
-            <div className='absolute w-full h-full z-10 flex justify-end top-0'>
-                <div className='w-[852px] sm:px-[266px] px-[20px] pyx-[200px] bg-background-login relative'>
-                    <div>
-                        <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="block w-[114px] h-[36px] m-auto mt-[140px] dark:w-[124px] dark:pr-[10px] dark:hidden" alt="" />
-                        <img src={__APP_ENV__.BASE_URL + '/logo-small-dark.png'} className="w-[114px] h-[36px] m-auto mt-[140px] dark:w-[124px] dark:pr-[10px] dark:block hidden" alt="" />
-                        <span className='block w-fit m-auto font-normal text-[14px] text-tx-color mt-[24px]'>{t('login.slogen')}</span>
-                    </div>
-                    <div className="grid gap-[12px] mt-[68px]">
-                        <div className="grid">
-                            <Input
-                                id="email"
-                                className='h-[48px] dark:bg-login-input'
-                                ref={mailRef}
-                                placeholder={t('login.account')}
-                                type="email"
-                                autoCapitalize="none"
-                                autoComplete="email"
-                                autoCorrect="off"
-                            />
-                        </div>
-                        <div className="grid">
-                            <Input
-                                id="pwd"
-                                className='h-[48px] dark:bg-login-input'
-                                ref={pwdRef}
-                                placeholder={t('login.password')}
-                                type="password"
-                                onKeyDown={e => e.key === 'Enter' && showLogin && handleLogin()} />
-                        </div>
-                        {
-                            !showLogin && <div className="grid">
-                                <Input id="pwd"
-                                    className='h-[48px] dark:bg-login-input'
-                                    ref={agenPwdRef}
-                                    placeholder={t('login.confirmPassword')}
-                                    type="password" />
-                            </div>
-                        }
-                        {
-                            captchaData.user_capthca && (<div className="flex items-center gap-4">
-                                <Input
+    return <div className="login-page">
+        <canvas id="particle-canvas"></canvas>
+        <div className="login-wrapper">
+            <div className="login-container">
+                <h1>E-Agent</h1>
+                <p className="tagline">{t('login.slogen')}</p>
+                <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                    <input
+                        id="email"
+                        ref={mailRef}
+                        placeholder={t('login.account')}
+                        type="email"
+                        required
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        autoCorrect="off"
+                    />
+                    <input
+                        id="password"
+                        ref={pwdRef}
+                        placeholder={t('login.password')}
+                        type="password"
+                        required
+                    />
+                    {
+                        captchaData.user_capthca && (
+                            <div className="captcha-group">
+                                <input
                                     type="text"
                                     ref={captchaRef}
                                     placeholder={t('login.pleaseEnterCaptcha')}
-                                    className="form-input px-4 py-2 border border-gray-300 focus:outline-none"
                                 />
                                 <img
-                                    src={'data:image/jpg;base64,' + captchaData.captcha} // 这里应该是你的验证码图片的URL
+                                    src={'data:image/jpg;base64,' + captchaData.captcha}
                                     alt="captcha"
-                                    onClick={fetchCaptchaData} // 这里应该是你的刷新验证码函数
-                                    className="cursor-pointer h-10 bg-gray-100 border border-gray-300"
-                                    style={{ width: '120px' }} // 根据需要调整宽度
+                                    onClick={fetchCaptchaData}
                                 />
                             </div>
-                            )
-                        }
-                        {
-                            showLogin ? <>
-                                <div className="text-center">
-                                    {!isLDAP && appConfig.register && <a href="javascript:;" className=" text-blue-500 text-sm hover:underline" onClick={() => setShowLogin(false)}>{t('login.noAccountRegister')}</a>}
-                                </div>
-                                <Button
-                                    className='h-[48px] mt-[32px] dark:bg-button'
-                                    disabled={isLoading} onClick={handleLogin} >{t('login.loginButton')}</Button>
-                            </> :
-                                <>
-                                    <div className="text-center">
-                                        <a href="javascript:;" className=" text-blue-500 text-sm hover:underline" onClick={() => setShowLogin(true)}>{t('login.haveAccountLogin')}</a>
-                                    </div>
-                                    <Button
-                                        className='h-[48px] mt-[32px] dark:bg-button'
-                                        disabled={isLoading} onClick={handleRegister} >{t('login.registerButton')}</Button>
-                                </>
-                        }
-                        {appConfig.isPro && <LoginBridge onHasLdap={setIsLDAP} />}
-                    </div>
-                    <div className=" absolute right-[16px] bottom-[16px] flex">
-                        <span className="mr-4 text-sm text-gray-400 relative top-2">v{json.version}</span>
-                        {!appConfig.noFace && <div className='help flex'>
-                            <a href={"https://github.com/dataelement/bisheng"} target="_blank">
-                                <GithubIcon className="block h-[40px] w-[40px] gap-1 border p-[10px] rounded-[8px] mx-[8px] hover:bg-[#1b1f23] hover:text-[white] hover:cursor-pointer" />
-                            </a>
-                            <a href={"https://m7a7tqsztt.feishu.cn/wiki/ZxW6wZyAJicX4WkG0NqcWsbynde"} target="_blank">
-                                <BookOpenIcon className="block h-[40px] w-[40px] gap-1 border p-[10px] rounded-[8px]  hover:bg-[#0055e3] hover:text-[white] hover:cursor-pointer" />
-                            </a>
-                        </div>}
-                    </div>
+                        )
+                    }
+                    <button type="submit" className='login-submit-button' disabled={isLoading}>
+                        {t('login.loginButton')}
+                    </button>
+                </form>
+                <div className="footer">
+                    <p>© 杭州唐数人工智能科技有限公司</p>
                 </div>
             </div>
         </div>
+        <span className="version">v{json.version}</span>
     </div>
 };
