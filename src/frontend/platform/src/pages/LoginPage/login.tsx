@@ -230,7 +230,7 @@ export const LoginPage = () => {
                         )
                     }
                     <button type="submit" className='login-submit-button' disabled={isLoading}>
-                        进入星河
+                        登录
                     </button>
                 </form>
                 <div className="footer">
