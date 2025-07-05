@@ -1,6 +1,6 @@
 export function transformModule(system: string): string {
     switch(system) {
-        case 'chat': return '会话'
+        case 'chat': return '智能体广场'
         case 'build': return '构建'
         case 'knowledge': return '知识库'
         case 'system': return '系统'
