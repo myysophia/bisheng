@@ -194,22 +194,22 @@ export const LoginPage = () => {
         <div className="login-wrapper">
             <div className="login-container">
                 <h1>E-Agent</h1>
-                <p className="tagline">{t('login.slogen')}</p>
-                <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                <p className="tagline">探索 · 连接 · 创造 | 教育智能体开发平台</p>
+                <form action="#" method="post" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                     <input
-                        id="email"
+                        type="text"
+                        id="username"
                         ref={mailRef}
-                        placeholder={t('login.account')}
-                        type="email"
+                        placeholder="用户名"
                         required
                         autoCapitalize="none"
-                        autoComplete="email"
+                        autoComplete="username"
                         autoCorrect="off"
                     />
                     <input
                         id="password"
                         ref={pwdRef}
-                        placeholder={t('login.password')}
+                        placeholder="密码"
                         type="password"
                         required
                     />
@@ -230,7 +230,7 @@ export const LoginPage = () => {
                         )
                     }
                     <button type="submit" className='login-submit-button' disabled={isLoading}>
-                        {t('login.loginButton')}
+                        进入星河
                     </button>
                 </form>
                 <div className="footer">
