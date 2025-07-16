@@ -1,55 +1,55 @@
-name: Frontend CI Docker
+# name: Frontend CI Docker
 
-on:
-  push:
-    tags:
-      - "dv*"
+# on:
+#   push:
+#     tags:
+#       - "dv*"
 
-env:
-  DOCKERHUB_REPO: ninesun0318/
-  DOCKERHUB_USERNAME: ninesun0318
+# env:
+#   DOCKERHUB_REPO: ninesun0318/
+#   DOCKERHUB_USERNAME: ninesun0318
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  build_frontend:
-    runs-on: ubuntu-latest
+# jobs:
+#   build_frontend:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
 
-      - name: Extract version from tag
-        id: get_version
-        run: |
-          echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+#       - name: Extract version from tag
+#         id: get_version
+#         run: |
+#           echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-      - name: Set RELEASE_VERSION env
-        run: echo "RELEASE_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+#       - name: Set RELEASE_VERSION env
+#         run: echo "RELEASE_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ env.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v1
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push Frontend Docker Image
-        uses: docker/build-push-action@v2
-        with:
-          context: ./src/frontend/
-          push: true
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            APP_NAME="bisheng-frontend"
-            APP_VERSION=${{ steps.get_version.outputs.VERSION }}
-          tags: |
-            ${{ env.DOCKERHUB_REPO }}bisheng-frontend:latest
-            ${{ env.DOCKERHUB_REPO }}bisheng-frontend:${{ steps.get_version.outputs.VERSION }}
+#       - name: Build and Push Frontend Docker Image
+#         uses: docker/build-push-action@v2
+#         with:
+#           context: ./src/frontend/
+#           push: true
+#           platforms: linux/amd64,linux/arm64
+#           build-args: |
+#             APP_NAME="bisheng-frontend"
+#             APP_VERSION=${{ steps.get_version.outputs.VERSION }}
+#           tags: |
+#             ${{ env.DOCKERHUB_REPO }}bisheng-frontend:latest
+#             ${{ env.DOCKERHUB_REPO }}bisheng-frontend:${{ steps.get_version.outputs.VERSION }}
