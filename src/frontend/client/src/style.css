@@ -498,6 +498,22 @@ Step 5: rebuild frontend code: `npm run frontend` (or rebuild docker).
   }
 } */
 
+/* 登录输入框高亮效果 */
+.login-input {
+  background-color: #181e29; /* 深色背景，未输入时 */
+  color: #fff;
+  border: 1px solid #444a5a;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+.login-input:focus,
+.login-input:not(:placeholder-shown) {
+  background-color: #eaf3ff; /* 浅色高亮，输入时 */
+  color: #222;
+  border: 2px solid #2da7ff;
+  outline: none;
+}
+
 /* .LazyLoad {
   opacity: 0;
   transition: all 1s ease-in-out;
