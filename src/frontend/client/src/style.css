@@ -504,6 +504,7 @@ Step 5: rebuild frontend code: `npm run frontend` (or rebuild docker).
   color: #222 !important;
   border: 2px solid #2da7ff !important;
   caret-color: #222 !important;
+  -webkit-text-fill-color: #222 !important;
   transition: background 0.2s, color 0.2s, border 0.2s;
 }
 
@@ -513,10 +514,27 @@ Step 5: rebuild frontend code: `npm run frontend` (or rebuild docker).
   border: 2px solid #2da7ff !important;
   outline: none !important;
   caret-color: #222 !important;
+  -webkit-text-fill-color: #222 !important;
 }
 
 .login-input::placeholder {
   color: #666 !important; /* placeholder 文字颜色 */
+  -webkit-text-fill-color: #666 !important;
+}
+
+/* 确保在深色模式下也强制使用浅色背景 */
+.dark .login-input,
+.dark .login-input:focus {
+  background-color: #eaf3ff !important;
+  color: #222 !important;
+  border: 2px solid #2da7ff !important;
+  caret-color: #222 !important;
+  -webkit-text-fill-color: #222 !important;
+}
+
+.dark .login-input::placeholder {
+  color: #666 !important;
+  -webkit-text-fill-color: #666 !important;
 }
 
 /* .LazyLoad {
