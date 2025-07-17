@@ -96,7 +96,7 @@ const LoginForm: React.FC<TLoginFormProps> = ({ onSubmit, startupConfig, error, 
                 },
               })}
               aria-invalid={!!errors.email}
-              className="login-input webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 duration-200 focus:border-green-500 focus:outline-none"
+              className="login-input webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light pb-2.5 pt-3 px-3.5 duration-200 focus:border-green-500 focus:outline-none"
               placeholder=" "
             />
             <label
@@ -128,7 +128,7 @@ const LoginForm: React.FC<TLoginFormProps> = ({ onSubmit, startupConfig, error, 
                 maxLength: { value: 128, message: localize('com_auth_password_max_length') },
               })}
               aria-invalid={!!errors.password}
-              className="login-input webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 duration-200 focus:border-green-500 focus:outline-none"
+              className="login-input webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light pb-2.5 pt-3 px-3.5 duration-200 focus:border-green-500 focus:outline-none"
               placeholder=" "
             />
             <label
