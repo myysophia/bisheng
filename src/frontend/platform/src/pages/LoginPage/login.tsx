@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { useTranslation } from 'react-i18next';
 import json from "../../../package.json";
 // import { alertContext } from "../contexts/alertContext";
@@ -8,6 +8,7 @@ import { getCaptchaApi, loginApi } from "../../controllers/API/user";
 import { captureAndAlertRequestErrorHoc } from "../../controllers/request";
 import { handleEncrypt, handleLdapEncrypt } from './utils';
 import { ldapLoginApi } from '@/controllers/API/pro';
+import { locationContext } from "@/contexts/locationContext";
 import './loginv2.css';
 
 export const LoginPage = () => {
@@ -15,6 +16,8 @@ export const LoginPage = () => {
     const { t, i18n } = useTranslation();
     const { message, toast } = useToast()
     const navigate = useNavigate()
+    const { appConfig } = useContext(locationContext)
+
     const isLoading = false
 
     const mailRef = useRef(null)
@@ -193,22 +196,22 @@ export const LoginPage = () => {
         <div className="login-wrapper">
             <div className="login-container">
                 <h1>E-Agent</h1>
-                <p className="tagline">探索 · 连接 · 创造 | 教育智能体开发平台</p>
-                <form action="#" method="post" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                <p className="tagline">{t('login.slogen')}</p>
+                <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                     <input
-                        type="text"
-                        id="username"
+                        id="email"
                         ref={mailRef}
-                        placeholder="用户名"
+                        placeholder={t('login.account')}
+                        type="email"
                         required
                         autoCapitalize="none"
-                        autoComplete="username"
+                        autoComplete="email"
                         autoCorrect="off"
                     />
                     <input
                         id="password"
                         ref={pwdRef}
-                        placeholder="密码"
+                        placeholder={t('login.password')}
                         type="password"
                         required
                     />
@@ -229,7 +232,7 @@ export const LoginPage = () => {
                         )
                     }
                     <button type="submit" className='login-submit-button' disabled={isLoading}>
-                        登录
+                        {t('login.loginButton')}
                     </button>
                 </form>
                 <div className="footer">
