@@ -1,7 +1,7 @@
 services:
   mysql:
     container_name: bisheng-mysql
-    image: mysql:8.0
+    image: cr.dataelem.com/mysql:8.0
     
     ports:
       - "3306:3306"
@@ -22,7 +22,7 @@ services:
 
   redis:
     container_name: bisheng-redis
-    image: redis:7.0.4
+    image: cr.dataelem.com/redis:7.0.4
     ports:
       - "6379:6379"
     environment:
@@ -40,7 +40,7 @@ services:
 
   office:
     container_name: bisheng-office
-    image: onlyoffice/documentserver:7.1.1
+    image: cr.dataelem.com/onlyoffice/documentserver:7.1.1
     ports:
       - "8701:80"
     environment:
@@ -53,7 +53,7 @@ services:
 
   backend:
     container_name: bisheng-backend
-    image: dataelement/bisheng-backend:v2.0.3
+    image: cr.dataelem.com/dataelement/bisheng-backend:latest
     ports:
       - "7860:7860"
     environment:
@@ -125,7 +125,7 @@ services:
 
   frontend:
     container_name: bisheng-frontend
-    image: dataelement/bisheng-frontend:v2.0.3
+    image: crpi-ywue2o6mpn8qaq0l.cn-hangzhou.personal.cr.aliyuncs.com/tangshu/bisheng-frontend:vts1.6 
     ports:
       - "3001:3001"
     environment:
@@ -139,7 +139,7 @@ services:
 
   elasticsearch:
     container_name: bisheng-es
-    image: docker.io/bitnami/elasticsearch:8.12.0
+    image: cr.dataelem.com/bitnami/elasticsearch:8.12.0
     user: root
     ports:
       - "9200:9200"
@@ -151,8 +151,8 @@ services:
     restart: on-failure
 
   etcd:
-    container_name: bisheng-milvus-etcd
-    image: quay.io/coreos/etcd:v3.5.5
+    container_name: milvus-etcd
+    image: cr.dataelem.com/quay.io/coreos/etcd:v3.5.5
     environment:
       ETCD_AUTO_COMPACTION_MODE: revision
       ETCD_AUTO_COMPACTION_RETENTION: "1000"
@@ -170,8 +170,8 @@ services:
       retries: 3
 
   minio:
-    container_name: bisheng-milvus-minio
-    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: milvus-minio
+    image: cr.dataelem.com/minio/minio:RELEASE.2023-03-20T20-16-18Z
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -190,8 +190,8 @@ services:
       retries: 3
 
   milvus:
-    container_name: bisheng-milvus-standalone
-    image: milvusdb/milvus:v2.5.10
+    container_name: milvus-standalone
+    image: cr.dataelem.com/milvusdb/milvus:v2.3.3
     command: ["milvus", "run", "standalone"]
     security_opt:
     - seccomp:unconfined
