@@ -1,2 +1,3 @@
 third_party/gpustack/** !text !filter !merge !diff
+third_party/gpustack/** -filter -diff -merge -text
 * !text !filter !merge !diff
