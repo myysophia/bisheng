@@ -7,7 +7,7 @@ from bisheng.database.models.flow import FlowDao
 from bisheng.database.models.gpts_tools import GptsToolsDao
 from bisheng.database.models.knowledge import KnowledgeDao
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 
 from bisheng.api.errcode.base import UnAuthorizedError
 from bisheng.api.services.role_group_service import RoleGroupService

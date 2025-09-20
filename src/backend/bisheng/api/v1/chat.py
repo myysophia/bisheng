@@ -6,7 +6,7 @@ from fastapi import (APIRouter, Body, HTTPException, Query, Request, WebSocket, 
                      status)
 from fastapi.params import Depends
 from fastapi.responses import StreamingResponse
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from sqlmodel import select
 
 from bisheng.api.errcode.base import NotFoundError

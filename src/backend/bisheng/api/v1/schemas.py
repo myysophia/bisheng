@@ -89,6 +89,12 @@ def resp_500(code: int = 500,
     return UnifiedResponseModel(status_code=code, status_message=message, data=data)
 
 
+def resp_404(data: Union[list, dict, str, Any] = None,
+             message: str = '资源不存在') -> UnifiedResponseModel:
+    """资源不存在的错误回复"""
+    return UnifiedResponseModel(status_code=404, status_message=message, data=data)
+
+
 class ProcessResponse(BaseModel):
     """Process response schema."""
 

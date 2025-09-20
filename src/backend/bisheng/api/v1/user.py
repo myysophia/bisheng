@@ -11,7 +11,7 @@ import rsa
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from sqlmodel import delete, select, func
 from captcha.image import ImageCaptcha
 

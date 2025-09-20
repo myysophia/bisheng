@@ -174,7 +174,8 @@ export const LoginPage = () => {
                 ? ldapLoginApi(mail, encryptPwd)
                 : loginApi(mail, encryptPwd, captchaData.captcha_key, captchaRef.current?.value)
             ).then((res: any) => {
-                window.self === window.top ? localStorage.removeItem('ws_token') : localStorage.setItem('ws_token', res.access_token)
+                // 总是保存 token，后续请求统一通过 Authorization 头携带，避免跨域 Cookie 带来的 401
+                localStorage.setItem('ws_token', res.access_token)
                 localStorage.setItem('isLogin', '1')
                 // const path = location.href.indexOf('from=workspace') === -1 ? '' : '/workspace'
                 location.href = location.pathname === '/' ? location.origin + '/workspace/' : location.href
@@ -207,6 +208,7 @@ export const LoginPage = () => {
                         autoCapitalize="none"
                         autoComplete="email"
                         autoCorrect="off"
+                        style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
                     />
                     <input
                         id="password"
@@ -214,14 +216,15 @@ export const LoginPage = () => {
                         placeholder={t('login.password')}
                         type="password"
                         required
+                        style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
                     />
-                    {
-                        captchaData.user_capthca && (
+                    {captchaData.user_capthca && (
                             <div className="captcha-group">
                                 <input
                                     type="text"
                                     ref={captchaRef}
                                     placeholder={t('login.pleaseEnterCaptcha')}
+                                    style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
                                 />
                                 <img
                                     src={'data:image/jpg;base64,' + captchaData.captcha}

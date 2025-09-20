@@ -165,6 +165,7 @@ class Settings(BaseModel):
     object_storage: ObjectStore = {}
     workflow_conf: WorkflowConf = WorkflowConf()
     celery_task: CeleryConf = CeleryConf()
+    gpustack: dict = {}  # GPUStack配置
 
     @field_validator('database_url')
     @classmethod
@@ -177,15 +178,22 @@ class Settings(BaseModel):
                 logger.debug('No DATABASE_URL env variable, using sqlite database')
                 value = 'sqlite:///./bisheng.db'
         else:
-            # 对密码进行加密
+            # 对密码进行解密（如果是加密的）
             import re
             pattern = r'(?<=:)[^:]+(?=@)'  # 匹配冒号后面到@符号前面的任意字符
             match = re.search(pattern, value)
             if match:
                 password = match.group(0)
-                new_password = decrypt_token(password)
-                new_mysql_url = re.sub(pattern, f'{new_password}', value)
-                value = new_mysql_url
+                # 判断是否是加密的密码（通常是base64格式的较长字符串）
+                if password.startswith('gAAAAA') and len(password) > 20:
+                    try:
+                        new_password = decrypt_token(password)
+                        new_mysql_url = re.sub(pattern, f'{new_password}', value)
+                        value = new_mysql_url
+                    except:
+                        # 如果解密失败，保持原样
+                        pass
+                # 否则就是明文密码，不需要解密
 
         return value
 

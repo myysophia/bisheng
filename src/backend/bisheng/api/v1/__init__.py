@@ -23,6 +23,7 @@ from bisheng.api.v1.validate import router as validate_router
 from bisheng.api.v1.variable import router as variable_router
 from bisheng.api.v1.workflow import router as workflow_router
 from bisheng.api.v1.workstation import router as workstation_router
+from bisheng.api.v1.deployment import router as deployment_router
 
 __all__ = [
     'chat_router',
@@ -50,4 +51,5 @@ __all__ = [
     "linsight_router",
     "tool_router",
     "invite_code_router",
+    "deployment_router",
 ]

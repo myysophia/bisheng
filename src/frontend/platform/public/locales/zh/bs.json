@@ -241,6 +241,7 @@
   "model": {
     "modelManagement": "模型管理",
     "modelFineTune": "模型微调",
+    "modelDeployment": "模型部署",
     "modelConfiguration": "模型配置",
     "modelCollectionCaption": "模型集合",
     "modelName": "模型名称",

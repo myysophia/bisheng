@@ -7,7 +7,7 @@ from bisheng.database.models.user_role import UserRole
 from bisheng.settings import settings
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from loguru import logger
 from sqlmodel import select
 

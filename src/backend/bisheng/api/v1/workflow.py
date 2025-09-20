@@ -3,7 +3,7 @@ import time
 from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, WebSocket, WebSocketException, Request, status as http_status
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from loguru import logger
 from sqlmodel import select
 

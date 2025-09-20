@@ -2,7 +2,7 @@ import json
 from typing import List
 
 from fastapi import APIRouter, Body, Depends
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 
 from bisheng import __version__
 from bisheng.api.services.component import ComponentService

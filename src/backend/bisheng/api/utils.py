@@ -11,7 +11,7 @@ from bisheng.database.models.variable_value import Variable
 from bisheng.graph.graph.base import Graph
 from bisheng.utils.logger import logger
 from fastapi import Request, WebSocket
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from platformdirs import user_cache_dir
 from sqlalchemy import delete
 from sqlmodel import select

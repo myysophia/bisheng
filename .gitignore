@@ -266,3 +266,7 @@ docker/data/*
 docker/mysql/data/*
 docker/office/bisheng/*.gz
 .history
+third_party/*
+*.pkg
+test_*.py
+tests/*

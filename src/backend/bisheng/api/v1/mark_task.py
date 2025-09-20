@@ -2,7 +2,7 @@ from collections import deque
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 
 from bisheng.api.services.user_service import UserPayload, get_login_user
 from bisheng.api.v1.schema.mark_schema import MarkData, MarkTaskCreate

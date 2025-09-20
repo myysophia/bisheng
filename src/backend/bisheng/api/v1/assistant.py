@@ -5,7 +5,7 @@ from fastapi import (APIRouter, Body, Depends, HTTPException, Query, Request, We
                      WebSocketException)
 from fastapi import status as http_status
 from fastapi.responses import StreamingResponse
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 
 from bisheng.api.services.assistant import AssistantService
 from bisheng.api.services.openapi import OpenApiSchema

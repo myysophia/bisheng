@@ -5,7 +5,7 @@ from typing import List, Literal, Optional
 from urllib import parse
 
 from fastapi import APIRouter, Depends, Body, Query, UploadFile, File, BackgroundTasks, Request, HTTPException
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from loguru import logger
 from sse_starlette import EventSourceResponse
 from starlette.responses import StreamingResponse

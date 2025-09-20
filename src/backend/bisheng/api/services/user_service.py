@@ -23,7 +23,7 @@ from bisheng.database.models.user_role import UserRoleDao
 from bisheng.settings import settings
 from bisheng.utils.constants import RSA_KEY, USER_CURRENT_SESSION
 from fastapi import Depends, HTTPException, Request
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 
 
 class UserPayload:

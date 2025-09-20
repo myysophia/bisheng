@@ -214,4 +214,17 @@ class MinioClient:
         return response
 
 
-minio_client = MinioClient()
+# 开发环境下，MinIO是可选的
+try:
+    minio_client = MinioClient()
+except:
+    import logging
+    logging.warning("MinIO is not available, using mock client")
+    class MockMinioClient:
+        def __init__(self):
+            pass
+        def __getattr__(self, name):
+            def mock_method(*args, **kwargs):
+                return None
+            return mock_method
+    minio_client = MockMinioClient()

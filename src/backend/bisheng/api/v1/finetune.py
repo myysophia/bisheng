@@ -2,7 +2,7 @@ import json
 import tempfile
 from typing import List, Optional
 
-from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth2 import AuthJWT
 from fastapi import APIRouter, Body, Depends, File, Query, UploadFile, Request
 from loguru import logger
 

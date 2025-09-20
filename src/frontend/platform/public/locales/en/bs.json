@@ -245,6 +245,7 @@
   "model": {
     "modelManagement": "Model Management",
     "modelFineTune": "Model Finetune",
+    "modelDeployment": "Model Deployment",
     "modelConfiguration": "Model Configuration",
     "modelCollectionCaption": "Model Collection",
     "modelName": "Model Name",

@@ -32,6 +32,7 @@ import { ResetPwdPage } from "./pages/LoginPage/resetPwd";
 import Doc from "./pages/ModelPage/doc";
 import { Finetune } from "./pages/ModelPage/finetune";
 import Management from "./pages/ModelPage/manage";
+import Deployment from "./pages/ModelPage/deployment";
 import Page403 from "./pages/Page403";
 import Report from "./pages/Report";
 import SystemPage from "./pages/SystemPage";
@@ -83,6 +84,7 @@ const privateRouter = [
       { path: "build/temps/:type", element: <Templates />, permission: 'build', },
       { path: "model/management", element: <Management /> },
       { path: "model/finetune", element: <Finetune /> },
+      { path: "model/deployment", element: <Deployment /> },
       { path: "model", element: <Navigate to="management" replace /> },
       { path: "sys", element: <SystemPage />, permission: 'sys' },
       { path: "log", element: <LogPage /> },
