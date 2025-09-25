@@ -36,7 +36,17 @@ export default function Deployment() {
         setLoading(true);
         try {
             const response = await getDeploymentListApi();
-            setDeployments(response.items || []);
+            const items = Array.isArray(response?.items) ? response.items : [];
+            const normalized = items.map((item: any) => ({
+                ...item,
+                modelId: item.modelId || item.modelID || item.model_id || item.id,
+                createdAt: item.createdAt || item.created_at,
+                updatedAt: item.updatedAt || item.updated_at,
+                modelName: item.modelName || item.model_name || item.name,
+                readyReplicas: item.readyReplicas ?? item.ready_replicas ?? 0,
+                replicas: item.replicas ?? item.desiredReplicas ?? item.desired_replicas ?? 0,
+            }));
+            setDeployments(normalized);
         } catch (error) {
             console.error('Failed to load deployments:', error);
             // 如果API调用失败，显示空列表

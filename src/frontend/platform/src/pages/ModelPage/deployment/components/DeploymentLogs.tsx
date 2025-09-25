@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/bs-ui/button";
 import { Input } from "@/components/bs-ui/input";
 import { Download, RefreshCw, Search, Pause, Play } from "lucide-react";
+import { getDeploymentInstancesApi, getDeploymentLogsApi } from "@/controllers/API/deployment";
 import { useToast } from "@/components/bs-ui/toast/use-toast";
 
 interface DeploymentLogsProps {
@@ -19,27 +20,30 @@ export default function DeploymentLogs({ deploymentId }: DeploymentLogsProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [logs, setLogs] = useState<string[]>([]);
     const [isAutoRefresh, setIsAutoRefresh] = useState(true);
-    const [instances, setInstances] = useState([
-        { id: "all", name: t('allInstances') },
-        { id: "inst-1", name: "llama2-7b-deployment-6d4b8d4dd-xvh2f" },
-        { id: "inst-2", name: "llama2-7b-deployment-6d4b8d4dd-k9p3m" }
+    const [instances, setInstances] = useState<Array<{ id: string; name: string }>>([
+        { id: "all", name: t('allInstances') }
     ]);
     
     const logsEndRef = useRef<HTMLDivElement>(null);
     const intervalRef = useRef<NodeJS.Timeout>();
 
     useEffect(() => {
+        loadInstances();
+    }, [deploymentId]);
+
+    useEffect(() => {
         loadLogs();
-        
+
         if (isAutoRefresh) {
             intervalRef.current = setInterval(loadLogs, 5000); // 每5秒刷新一次
         }
-        
+
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [deploymentId, selectedInstance, logLevel, isAutoRefresh]);
 
     useEffect(() => {
@@ -47,29 +51,39 @@ export default function DeploymentLogs({ deploymentId }: DeploymentLogsProps) {
         scrollToBottom();
     }, [logs]);
 
+    const loadInstances = async () => {
+        try {
+            const data = await getDeploymentInstancesApi(deploymentId);
+            const list = Array.isArray(data) ? data : data?.items ?? [];
+            const normalized = list.map((item: any) => ({
+                id: item.id ?? item.instanceId ?? item.worker_name ?? Math.random().toString(36).slice(-6),
+                name: item.name ?? item.id ?? item.worker_name ?? t('unknownInstance')
+            }));
+            setInstances([{ id: "all", name: t('allInstances') }, ...normalized]);
+        } catch (error) {
+            message({ variant: 'error', description: t('loadDeploymentDetailFailed') });
+        }
+    };
+
     const loadLogs = async () => {
-        // TODO: 调用API获取日志
-        // const data = await getDeploymentLogsApi(deploymentId, selectedInstance, logLevel);
-        
-        // 模拟日志数据
-        const timestamp = new Date().toISOString();
-        const newLogs = [
-            `[${timestamp}] [INFO] Model loaded successfully`,
-            `[${timestamp}] [INFO] Starting inference server on port 8080`,
-            `[${timestamp}] [DEBUG] GPU memory allocated: 8192MB`,
-            `[${timestamp}] [INFO] Health check passed`,
-            `[${timestamp}] [INFO] Received request from client 192.168.1.100`,
-            `[${timestamp}] [DEBUG] Processing tokens: 512`,
-            `[${timestamp}] [INFO] Request completed in 120ms`,
-            `[${timestamp}] [WARN] GPU utilization above 80%`,
-            `[${timestamp}] [INFO] Auto-scaling triggered`,
-            `[${timestamp}] [ERROR] Failed to connect to monitoring service (retrying...)`,
-            `[${timestamp}] [INFO] Successfully reconnected to monitoring service`,
-            `[${timestamp}] [DEBUG] Cache hit rate: 65%`,
-            `[${timestamp}] [INFO] Model inference latency: 95ms (p95)`,
-        ];
-        
-        setLogs(prevLogs => [...prevLogs, ...newLogs].slice(-1000)); // 保留最近1000条
+        try {
+            const params: Record<string, any> = {
+                log_level: logLevel !== 'all' ? logLevel : undefined,
+                lines: 200,
+            };
+
+            const activeInstance = selectedInstance !== 'all' ? selectedInstance : undefined;
+            if (activeInstance) {
+                params.instance_id = activeInstance;
+            }
+
+            const data = await getDeploymentLogsApi(deploymentId, params);
+            const resultLogs = Array.isArray(data) ? data : data?.logs ?? [];
+            const newLogs = resultLogs.map((item: any) => (typeof item === 'string' ? item : JSON.stringify(item)));
+            setLogs(newLogs);
+        } catch (error) {
+            message({ variant: 'error', description: t('loadDeploymentDetailFailed') });
+        }
     };
 
     const scrollToBottom = () => {

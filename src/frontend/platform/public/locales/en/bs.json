@@ -33,7 +33,8 @@
     "evaluation": "Evaluation",
     "annotation": "Annotation",
     "models": "Models",
-    "system": "System",
+    "monitor": "Monitor",
+    "system": "User",
     "log": "Logs",
     "dataset": "Dataset",
     "themeSwitch": "Theme Switch",
@@ -43,7 +44,9 @@
     "logoutContent": "Are you sure to log out",
     "forBestExperience": "For the best experience, please access this website on a PC",
     "onlineDocumentation": "Online Documentation",
-    "changePwd": "Password"
+    "changePwd": "Password",
+    "collapseSidebar": "Collapse Sidebar",
+    "expandSidebar": "Expand Sidebar"
   },
   "system": {
     "userManagement": "User Management",

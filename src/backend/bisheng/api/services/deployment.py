@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import os
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import aiohttp
+from aiohttp import ContentTypeError, ClientTimeout
 import json
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote
 
 from bisheng.settings import settings
 from bisheng.api.services.base import BaseService
@@ -20,23 +22,110 @@ class GPUStackService(BaseService):
         # 从config.yaml读取GPUStack配置
         gpustack_config = settings.get_from_db("gpustack") or {}
         self.gpustack_url = gpustack_config.get("url", "https://gpustack.agentgo.tech")
-        self.gpustack_username = gpustack_config.get("username", "admin")
-        self.gpustack_password = gpustack_config.get("password", "Qwer1234!!!")
-        
-        # 如果没有配置，使用默认值
+        self.gpustack_username = gpustack_config.get("username") or "admin"
+        self.gpustack_password = gpustack_config.get("password") or "Qwer1234!!!"
+        self.gpustack_token = gpustack_config.get("token") or ""
+
+        modelscope_config = settings.get_from_db("modelscope") or {}
+        self.modelscope_cookie = modelscope_config.get("cookie") or os.getenv("MODELSCOPE_COOKIE", "")
+        self.modelscope_token = modelscope_config.get("token") or os.getenv("MODELSCOPE_TOKEN", "")
+
         if not self.gpustack_url:
             self.gpustack_url = "https://gpustack.agentgo.tech"
-        if not self.gpustack_username:
-            self.gpustack_username = "admin"
-        if not self.gpustack_password:
-            self.gpustack_password = "Qwer1234!!!"
-            
+
+        self.use_token_auth = bool(self.gpustack_token)
         self.session_cookie = None
         self.headers = {
             "Content-Type": "application/json"
         }
+        if self.use_token_auth:
+            self.headers["Authorization"] = f"Bearer {self.gpustack_token}"
         
         logger.info(f"GPUStack service initialized with URL: {self.gpustack_url}")
+
+    @staticmethod
+    def _normalize_label_list(values: Any) -> List[str]:
+        """将ModelScope返回的标签或任务字段统一为字符串列表"""
+        if not isinstance(values, list):
+            return []
+
+        candidates = [
+            "Name",
+            "name",
+            "TagName",
+            "tagName",
+            "DisplayName",
+            "displayName",
+            "ChineseName",
+            "chineseName",
+            "Description",
+            "description",
+            "DomainName",
+            "domainName",
+            "Id",
+            "id",
+        ]
+
+        normalized: List[str] = []
+        seen = set()
+
+        for value in values:
+            label: Optional[str] = None
+
+            if isinstance(value, str):
+                label = value.strip() or None
+            elif isinstance(value, (int, float)):
+                label = str(value)
+            elif isinstance(value, dict):
+                for key in candidates:
+                    field = value.get(key)
+                    if isinstance(field, str):
+                        field_value = field.strip()
+                        if field_value:
+                            label = field_value
+                            break
+                    elif isinstance(field, (int, float)):
+                        label = str(field)
+                        break
+
+            if label and label not in seen:
+                seen.add(label)
+                normalized.append(label)
+
+        return normalized
+
+    def _default_modelscope_headers(self) -> Dict[str, str]:
+        """构造访问 ModelScope 接口时使用的默认请求头"""
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Origin": "https://www.modelscope.cn",
+            "Referer": "https://www.modelscope.cn/",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        if self.modelscope_cookie:
+            headers["Cookie"] = self.modelscope_cookie
+        if self.modelscope_token:
+            headers.setdefault("Authorization", f"token {self.modelscope_token}")
+            headers.setdefault("X-Auth-Token", self.modelscope_token)
+        return headers
+
+    async def _fetch_modelscope_json(self, session: aiohttp.ClientSession, url: str) -> Dict[str, Any]:
+        """直接向 ModelScope 官方接口发起请求并返回解析后的 JSON"""
+        async with session.get(url) as response:
+            text = await response.text()
+            if response.status >= 400:
+                snippet = text[:200].replace("\n", " ")
+                raise Exception(f"ModelScope API error ({response.status}): {snippet}")
+
+            try:
+                return await response.json(content_type=None)
+            except (ContentTypeError, json.JSONDecodeError):
+                try:
+                    return json.loads(text)
+                except json.JSONDecodeError as error:
+                    raise Exception(f"Unable to parse ModelScope response: {error}")
     
     async def _login(self) -> str:
         """登录到GPUStack获取session cookie"""
@@ -68,6 +157,8 @@ class GPUStackService(BaseService):
     
     async def _ensure_authenticated(self):
         """确保有有效的认证信息"""
+        if self.use_token_auth:
+            return
         if not self.session_cookie:
             self.session_cookie = await self._login()
         
@@ -79,14 +170,19 @@ class GPUStackService(BaseService):
         await self._ensure_authenticated()
         
         # 准备cookies
-        cookies = {"gpustack_session": self.session_cookie} if self.session_cookie else None
-        
+        cookies = None
+        if not self.use_token_auth and self.session_cookie:
+            cookies = {"gpustack_session": self.session_cookie}
+        request_headers = dict(self.headers)
+        if "headers" in kwargs and kwargs["headers"]:
+            request_headers.update(kwargs.pop("headers"))
+
         async with aiohttp.ClientSession(cookies=cookies) as session:
             try:
                 async with session.request(
                     method=method,
                     url=url,
-                    headers=self.headers,
+                    headers=request_headers,
                     **kwargs
                 ) as response:
                     if response.status == 401:
@@ -94,28 +190,45 @@ class GPUStackService(BaseService):
                         logger.warning("Authentication failed, retrying with new login")
                         self.session_cookie = None
                         await self._ensure_authenticated()
-                        cookies = {"gpustack_session": self.session_cookie} if self.session_cookie else None
+                        if not self.use_token_auth and self.session_cookie:
+                            cookies = {"gpustack_session": self.session_cookie}
+                        else:
+                            cookies = None
                         
                         # 重新创建 session 并重试请求
                         async with aiohttp.ClientSession(cookies=cookies) as retry_session:
                             async with retry_session.request(
                                 method=method,
                                 url=url,
-                                headers=self.headers,
+                                headers=request_headers,
                                 **kwargs
                             ) as retry_response:
                                 if retry_response.status >= 400:
                                     error_text = await retry_response.text()
-                                    logger.error(f"GPUStack API error: {retry_response.status} - {error_text}")
-                                    raise Exception(f"GPUStack API error: {retry_response.status}")
-                                
-                                return await retry_response.json()
+                                    message = self._parse_error_message(error_text)
+                                    logger.error(
+                                        "GPUStack API error: %s - %s",
+                                        retry_response.status,
+                                        message,
+                                    )
+                                    raise Exception(
+                                        f"GPUStack API error ({retry_response.status}): {message}"
+                                    )
+
+                                return await self._parse_response(retry_response)
                     elif response.status >= 400:
                         error_text = await response.text()
-                        logger.error(f"GPUStack API error: {response.status} - {error_text}")
-                        raise Exception(f"GPUStack API error: {response.status}")
-                    
-                    return await response.json()
+                        message = self._parse_error_message(error_text)
+                        logger.error(
+                            "GPUStack API error: %s - %s",
+                            response.status,
+                            message,
+                        )
+                        raise Exception(
+                            f"GPUStack API error ({response.status}): {message}"
+                        )
+
+                    return await self._parse_response(response)
             except aiohttp.ClientError as e:
                 logger.error(f"Failed to connect to GPUStack: {str(e)}")
                 raise Exception(f"Failed to connect to GPUStack service: {str(e)}")
@@ -203,6 +316,9 @@ class GPUStackService(BaseService):
             desired_replicas = deployment_data.get("replicas", 1)
             await self._wait_for_model_ready(model_id, desired_replicas)
 
+            deployment = await self.get_deployment(user_id=user_id, deployment_id=str(model_id))
+            if deployment:
+                return deployment
             return self._convert_to_deployment(model_response)
 
         except Exception as e:
@@ -216,59 +332,26 @@ class GPUStackService(BaseService):
     ) -> Optional[Dict[str, Any]]:
         """获取部署详情"""
         try:
-            # 首先尝试获取model-instance详情
-            try:
-                instance_response = await self._make_request(
-                    "GET",
-                    f"/v1/model-instances/{deployment_id}"
-                )
-                model_id = instance_response.get("model_id")
-                
-                # 获取对应的模型详情
-                model_response = await self._make_request(
-                    "GET",
-                    f"/v1/models/{model_id}"
-                )
-                
-                # 合并instance和model数据
-                deployment_data = {**model_response}
-                deployment_data.update({
-                    "id": deployment_id,  # 使用instance ID
-                    "state": instance_response.get("state"),
-                    "worker_name": instance_response.get("worker_name"),
-                    "created_at": instance_response.get("created_at"),
-                    "updated_at": instance_response.get("updated_at")
-                })
-                
-                deployment = self._convert_to_deployment(deployment_data)
-                
-                # 获取模型所有实例
-                instances_response = await self._make_request(
-                    "GET",
-                    f"/v1/models/{model_id}/instances"
-                )
-                deployment["instances"] = self._convert_instances(instances_response.get("items", []))
-                
-                return deployment
-                
-            except Exception:
-                # 如果作为instance ID失败，尝试作为model ID
-                model_response = await self._make_request(
-                    "GET",
-                    f"/v1/models/{deployment_id}"
-                )
-                
-                # 获取模型实例
-                instances_response = await self._make_request(
-                    "GET",
-                    f"/v1/models/{deployment_id}/instances"
-                )
-                
-                deployment = self._convert_to_deployment(model_response)
-                deployment["instances"] = self._convert_instances(instances_response.get("items", []))
-                
-                return deployment
-            
+            model_id = await self._resolve_model_id(deployment_id)
+
+            model_response = await self._make_request(
+                "GET",
+                f"/v1/models/{model_id}"
+            )
+
+            instances_response = await self._make_request(
+                "GET",
+                f"/v1/models/{model_id}/instances"
+            )
+
+            deployment = self._convert_to_deployment(model_response)
+            instances = self._convert_instances(instances_response.get("items", []))
+            deployment["instances"] = instances
+            deployment["modelId"] = str(model_id)
+            deployment["instanceIds"] = [instance.get("id") for instance in instances]
+            deployment["requestedId"] = str(deployment_id)
+
+            return deployment
         except Exception as e:
             logger.error(f"Failed to get deployment: {str(e)}")
             return None
@@ -423,24 +506,24 @@ class GPUStackService(BaseService):
         """获取部署日志"""
         try:
             # 如果指定了实例ID，获取特定实例的日志
-            if instance_id:
-                endpoint = f"/v1/model-instances/{instance_id}/logs"
-            else:
-                # 获取第一个实例的日志
+            target_instance_id = instance_id
+            if not target_instance_id:
                 instances = await self.get_deployment_instances(user_id, deployment_id)
                 if not instances:
                     return []
-                instance_id = instances[0]["id"]
-                endpoint = f"/v1/model-instances/{instance_id}/logs"
-            
+                target_instance_id = instances[0]["id"]
+
             response = await self._make_request(
                 "GET",
-                endpoint,
-                params={"lines": lines}
+                f"/v1/model-instances/{target_instance_id}/logs",
+                params={"tail": lines, "follow": False}
             )
-            
-            # 处理日志文本
-            logs_text = response if isinstance(response, str) else str(response)
+
+            if isinstance(response, dict) and "logs" in response:
+                logs_text = response.get("logs", "")
+            else:
+                logs_text = response if isinstance(response, str) else str(response)
+
             logs = logs_text.split("\n")
             
             # 根据日志级别过滤
@@ -493,12 +576,38 @@ class GPUStackService(BaseService):
         except Exception as e:
             logger.error(f"Failed to get available resources: {str(e)}")
             raise
-    
+
+    async def list_workers(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """列出 GPUStack Worker 列表"""
+        try:
+            response = await self._make_request(
+                "GET",
+                "/v1/workers",
+                params=params or None,
+            )
+            return response
+        except Exception as e:
+            logger.error(f"Failed to list workers: {str(e)}")
+            raise
+
+    async def list_gpu_devices(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """列出 GPU 设备列表"""
+        try:
+            response = await self._make_request(
+                "GET",
+                "/v1/gpu-devices",
+                params=params or None,
+            )
+            return response
+        except Exception as e:
+            logger.error(f"Failed to list GPU devices: {str(e)}")
+            raise
+
     async def get_available_models(self) -> List[Dict[str, Any]]:
         """获取可用于部署的模型列表"""
         try:
             model_list = []
-            
+
             # 从GPUStack获取预定义的模型集
             try:
                 model_sets = await self._make_request(
@@ -539,6 +648,28 @@ class GPUStackService(BaseService):
             logger.error(f"Failed to get available models: {str(e)}")
             return []
 
+    async def _parse_response(self, response: aiohttp.ClientResponse):
+        """解析HTTP响应，支持JSON与纯文本"""
+        try:
+            return await response.json()
+        except ContentTypeError:
+            return await response.text()
+
+    def _parse_error_message(self, raw_text: str) -> str:
+        """提取GPUStack错误信息"""
+        try:
+            data = json.loads(raw_text)
+            if isinstance(data, dict):
+                for key in ("message", "detail", "error", "status_message"):
+                    value = data.get(key)
+                    if value:
+                        if isinstance(value, (dict, list)):
+                            return json.dumps(value, ensure_ascii=False)
+                        return str(value)
+        except json.JSONDecodeError:
+            pass
+        return raw_text.strip() or "Unknown error"
+
     async def list_modelscope_models(
         self,
         page_number: int = 1,
@@ -567,24 +698,358 @@ class GPUStackService(BaseService):
                 },
                 json=payload
             )
-            return response
+
+            data = response.get("Data") or response.get("data") or response
+            model_data = data.get("Model") or data.get("model") or {}
+            items_raw = (
+                model_data.get("Models")
+                or model_data.get("models")
+                or data.get("Models")
+                or data.get("models")
+                or []
+            )
+
+            normalized_items = []
+            for item in items_raw:
+                if not isinstance(item, dict):
+                    continue
+
+                owner_candidates = [
+                    item.get("Owner"),
+                    item.get("owner"),
+                    item.get("OwnerName"),
+                    item.get("ownerName"),
+                    item.get("UserName"),
+                    item.get("userName"),
+                    item.get("Namespace"),
+                    item.get("namespace"),
+                    item.get("OrgName"),
+                    item.get("orgName"),
+                    item.get("Path"),
+                ]
+
+                owner = None
+                for candidate in owner_candidates:
+                    if candidate is None:
+                        continue
+                    candidate_str = str(candidate).strip()
+                    if candidate_str:
+                        owner = candidate_str
+                        break
+
+                repository_candidates = [
+                    item.get("RepositoryPath"),
+                    item.get("repositoryPath"),
+                    item.get("RepositoryId"),
+                    item.get("repositoryId"),
+                    item.get("Path"),
+                    item.get("ModelId"),
+                    item.get("modelId"),
+                    item.get("ModelName"),
+                    item.get("modelName"),
+                    item.get("Name"),
+                    item.get("name"),
+                    f"{owner}/{item.get('Name')}" if owner and item.get('Name') else None,
+                ]
+                repository_id = None
+                for candidate in repository_candidates:
+                    if candidate is None:
+                        continue
+                    candidate_str = str(candidate).strip()
+                    if not candidate_str:
+                        continue
+                    # ModelScope 仓库通常为 owner/model-name 形式，优先包含 / 的值
+                    if "/" in candidate_str or candidate_str.count("-") >= 2:
+                        repository_id = candidate_str
+                        break
+                    if repository_id is None:
+                        repository_id = candidate_str
+
+                numeric_id = item.get("Id") or item.get("id")
+                primary_id = repository_id or numeric_id or item.get("Uid") or item.get("uid")
+                primary_id = str(primary_id) if primary_id is not None else None
+
+                model_name = (
+                    item.get("Name")
+                    or item.get("name")
+                    or item.get("ModelName")
+                    or item.get("modelName")
+                    or repository_id
+                )
+
+                if owner and repository_id:
+                    if "/" not in repository_id:
+                        repository_id = f"{owner}/{repository_id}"
+                    elif not repository_id.lower().startswith(owner.lower() + "/"):
+                        repository_id = f"{owner}/{repository_id}"
+
+                if (not repository_id or "/" not in repository_id) and owner and item.get("Name"):
+                    repository_id = f"{owner}/{item.get('Name')}"
+
+                display_name = repository_id or model_name
+
+                normalized_items.append({
+                    "id": repository_id or primary_id,
+                    "repository_id": repository_id,
+                    "numeric_id": numeric_id,
+                    "name": display_name,
+                    "owner": owner,
+                    "description": item.get("Description")
+                    or item.get("Desc")
+                    or item.get("description"),
+                    "tags": self._normalize_label_list(
+                        item.get("Tags")
+                        or item.get("TagNames")
+                        or item.get("tags")
+                        or []
+                    ),
+                    "tasks": self._normalize_label_list(
+                        item.get("Tasks")
+                        or item.get("tasks")
+                        or []
+                    ),
+                    "downloads": item.get("DownloadCount")
+                    or item.get("DownloadNum")
+                    or item.get("downloads"),
+                    "favourites": item.get("FollowerCount")
+                    or item.get("FavoriteCount")
+                    or item.get("favourites"),
+                    "updated_at": item.get("GmtModified")
+                    or item.get("UpdatedAt")
+                    or item.get("updated_at"),
+                    "publisher": owner
+                    or item.get("publisher"),
+                    "icon": item.get("Cover")
+                    or item.get("CoverUrl")
+                    or item.get("icon"),
+                    "raw": item,
+                })
+
+            def _first_valid(candidates, fallback):
+                for candidate in candidates:
+                    if candidate is None:
+                        continue
+                    if isinstance(candidate, str) and not candidate.strip():
+                        continue
+                    return candidate
+                return fallback
+
+            def _to_int(value, fallback):
+                try:
+                    if isinstance(value, str):
+                        value = value.replace(",", "").strip()
+                    return int(float(value))
+                except (TypeError, ValueError):
+                    return fallback
+
+            total_candidates = (
+                model_data.get("Total"),
+                model_data.get("total"),
+                model_data.get("TotalCount"),
+                model_data.get("totalCount"),
+                data.get("Total"),
+                data.get("total"),
+                data.get("TotalCount"),
+                data.get("totalCount"),
+            )
+            total_value = _first_valid(total_candidates, len(normalized_items))
+            total = _to_int(total_value, len(normalized_items))
+
+            page_candidates = (
+                model_data.get("PageNumber"),
+                model_data.get("pageNumber"),
+                model_data.get("Page"),
+                model_data.get("currentPage"),
+                data.get("PageNumber"),
+                data.get("pageNumber"),
+                data.get("Page"),
+                data.get("currentPage"),
+            )
+            page_value = _first_valid(page_candidates, page_number)
+            page_value = _to_int(page_value, page_number)
+
+            size_candidates = (
+                model_data.get("PageSize"),
+                model_data.get("pageSize"),
+                model_data.get("Page_size"),
+                model_data.get("page_size"),
+                data.get("PageSize"),
+                data.get("pageSize"),
+                data.get("Page_size"),
+                data.get("page_size"),
+            )
+            size_value = _first_valid(size_candidates, page_size)
+            size_value = _to_int(size_value, page_size)
+
+            return {
+                "items": normalized_items,
+                "total": total,
+                "page": page_value,
+                "page_size": size_value,
+                "raw": response,
+            }
         except Exception as e:
             logger.error(f"Failed to fetch ModelScope model list: {str(e)}")
             raise
 
     async def get_modelscope_model_detail(self, model_id: str) -> Dict[str, Any]:
-        """获取单个ModelScope模型详情"""
-        try:
-            response = await self._make_request(
-                "GET",
-                "/proxy",
-                params={
-                    "url": f"https://modelscope.cn/api/v1/models/{model_id}"
+        """获取单个ModelScope模型详情。兼容不同域名，同时防止GPUStack返回200但包体404的情况"""
+        model_id_str = str(model_id).strip()
+        encoded_model_id = quote(model_id_str, safe="/")
+
+        candidate_urls = [
+            f"https://www.modelscope.cn/api/v1/models/{encoded_model_id}",
+            f"https://modelscope.cn/api/v1/models/{encoded_model_id}",
+        ]
+
+        last_error: Optional[Exception] = None
+
+        for target_url in candidate_urls:
+            try:
+                response = await self._make_request(
+                    "GET",
+                    "/proxy",
+                    params={"url": target_url},
+                )
+
+                if isinstance(response, str):
+                    try:
+                        response = json.loads(response)
+                    except json.JSONDecodeError:
+                        last_error = Exception(f"Unexpected response from GPUStack proxy: {response[:120]}")
+                        continue
+
+                status_candidates = [
+                    response.get("Code"),
+                    response.get("code"),
+                    response.get("StatusCode"),
+                    response.get("statusCode"),
+                    response.get("status_code"),
+                ]
+                status_value = next((value for value in status_candidates if value is not None), 200)
+                try:
+                    status_int = int(status_value)
+                except (TypeError, ValueError):
+                    status_int = 200
+
+                if status_int not in (0, 200):
+                    message = (
+                        response.get("Message")
+                        or response.get("message")
+                        or response.get("StatusMessage")
+                        or response.get("status_message")
+                        or "Unknown error"
+                    )
+                    last_error = Exception(f"GPUStack proxy returned status {status_int}: {message}")
+                    continue
+
+                data = response.get("Data") or response.get("data") or response
+
+                readme_content = ""
+                readme = (
+                    data.get("Readme")
+                    or data.get("readme")
+                    or data.get("ReadMe")
+                    or data.get("ReadMeContent")
+                    or data.get("readMeContent")
+                )
+                if isinstance(readme, dict):
+                    readme_content = (
+                        readme.get("Content")
+                        or readme.get("content")
+                        or readme.get("Html")
+                        or readme.get("html")
+                    )
+                elif isinstance(readme, str):
+                    readme_content = readme
+
+                path = data.get("Path") or data.get("path") or data.get("Namespace") or data.get("namespace")
+                model_name = data.get("Name") or data.get("ModelName") or model_id
+                repository_id = None
+                if path and model_name:
+                    repository_id = f"{path}/{model_name}"
+
+                owner = (
+                    data.get("Owner")
+                    or data.get("owner")
+                    or data.get("OwnerName")
+                    or data.get("ownerName")
+                    or data.get("UserName")
+                    or data.get("userName")
+                    or path
+                )
+
+                tags_raw = data.get("Tags") or data.get("TagNames") or []
+                if isinstance(tags_raw, dict):
+                    tags_raw = tags_raw.get("Items") or tags_raw.get("items") or []
+
+                tasks_raw = data.get("Tasks") or data.get("TaskNames") or []
+                if isinstance(tasks_raw, dict):
+                    tasks_raw = tasks_raw.get("Items") or tasks_raw.get("items") or []
+
+                return {
+                    "id": repository_id or data.get("ModelId") or data.get("Id") or model_id,
+                    "name": repository_id or model_name,
+                    "repository_id": repository_id,
+                    "path": path,
+                    "owner": owner,
+                    "description": data.get("Description") or data.get("Desc"),
+                    "tags": self._normalize_label_list(tags_raw),
+                    "tasks": self._normalize_label_list(tasks_raw),
+                    "readme": readme_content,
+                    "updated_at": data.get("LastUpdatedTime") or data.get("GmtModified"),
+                    "raw": response,
                 }
+
+            except Exception as inner_error:
+                last_error = inner_error
+                continue
+
+        error_message = str(last_error) if last_error else f"ModelScope detail not found for {model_id_str}"
+        if model_id_str and model_id_str.isdigit():
+            error_message = (
+                f"ModelScope detail not found for numeric id {model_id_str}. "
+                "请使用仓库格式（如 owner/model-name）。"
+            )
+        logger.error(f"Failed to fetch ModelScope model detail via GPUStack proxy: {error_message}")
+        raise Exception(error_message)
+
+    async def evaluate_modelscope_model(self, deployment_data: Dict[str, Any]) -> Dict[str, Any]:
+        """评估 ModelScope 模型的部署可行性"""
+        try:
+            spec = {
+                "source": "model_scope",
+                "name": deployment_data.get("name"),
+                "description": deployment_data.get("description"),
+                "model_scope_model_id": deployment_data.get("model_scope_model_id"),
+                "model_scope_file_path": deployment_data.get("model_scope_file_path"),
+                "backend": deployment_data.get("backend"),
+                "replicas": deployment_data.get("replicas", 1),
+                "categories": deployment_data.get("categories"),
+                "backend_parameters": deployment_data.get("backend_parameters"),
+                "env": deployment_data.get("environment_variables") or {},
+                "restart_on_error": deployment_data.get("restart_on_error"),
+                "placement_strategy": deployment_data.get("placement_strategy"),
+                "worker_selector": deployment_data.get("worker_selector"),
+                "cpu_offloading": deployment_data.get("cpu_offloading"),
+                "distributed_inference_across_workers": deployment_data.get(
+                    "distributed_inference_across_workers"
+                ),
+                "gpu_selector": deployment_data.get("gpu_selector"),
+            }
+
+            spec = {k: v for k, v in spec.items() if v is not None}
+
+            payload = {"model_specs": [spec]}
+
+            response = await self._make_request(
+                "POST",
+                "/v1/model-evaluations",
+                json=payload
             )
             return response
         except Exception as e:
-            logger.error(f"Failed to fetch ModelScope model detail: {str(e)}")
+            logger.error(f"Failed to evaluate ModelScope model: {str(e)}")
             raise
     
     # 辅助方法
@@ -687,7 +1152,7 @@ class GPUStackService(BaseService):
                 "gpu": f"{instance.get('gpu_count', 0)} GPU(s)",
                 "memory": instance.get("memory", "0"),
                 "cpu": f"{instance.get('cpu', 0)} cores",
-                "start_time": instance.get("created_at", "")
+                "startTime": instance.get("created_at", "")
             })
         return converted
 

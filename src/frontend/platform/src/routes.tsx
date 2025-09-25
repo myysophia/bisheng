@@ -33,6 +33,7 @@ import Doc from "./pages/ModelPage/doc";
 import { Finetune } from "./pages/ModelPage/finetune";
 import Management from "./pages/ModelPage/manage";
 import Deployment from "./pages/ModelPage/deployment";
+import MonitorPage from "./pages/Monitor";
 import Page403 from "./pages/Page403";
 import Report from "./pages/Report";
 import SystemPage from "./pages/SystemPage";
@@ -86,6 +87,7 @@ const privateRouter = [
       { path: "model/finetune", element: <Finetune /> },
       { path: "model/deployment", element: <Deployment /> },
       { path: "model", element: <Navigate to="management" replace /> },
+      { path: "monitor", element: <MonitorPage />, permission: 'monitor' },
       { path: "sys", element: <SystemPage />, permission: 'sys' },
       { path: "log", element: <LogPage /> },
       { path: "log/chatlog/:fid/:cid/:type", element: <AppChatDetail /> },

@@ -60,6 +60,8 @@
     "react-window": "^1.8.10",
     "recharts": "^2.12.7",
     "rehype-mathjax": "^7.1.0",
+    "rehype-raw": "^6.1.1",
+    "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "tailwind-merge": "^2.3.0",

@@ -121,6 +121,18 @@ export const getAvailableResourcesApi = async () => {
     return response;
 };
 
+// Worker 列表
+export const listWorkersApi = async (params?: Record<string, any>) => {
+    const response = await axios.get('/api/v1/deployment/resources/workers', { params });
+    return response;
+};
+
+// GPU 设备列表
+export const listGpuDevicesApi = async (params?: Record<string, any>) => {
+    const response = await axios.get('/api/v1/deployment/resources/gpus', { params });
+    return response;
+};
+
 // 获取可部署的模型列表
 export const getAvailableModelsApi = async () => {
     const response = await axios.get('/api/v1/deployment/models/available');
@@ -144,6 +156,44 @@ export const listModelScopeModelsApi = async (payload: {
 export const getModelScopeModelDetailApi = async (modelId: string) => {
     const response = await axios.get('/api/v1/deployment/modelscope/detail', {
         params: { model_id: modelId }
+    });
+    return response;
+};
+
+// ModelScope 模型部署评估
+export const evaluateModelScopeModelApi = async (data: {
+    name: string;
+    modelScopeModelId: string;
+    modelScopeFilePath?: string;
+    backend: string;
+    replicas: number;
+    description?: string;
+    categories?: string[];
+    backendParameters?: string[];
+    environmentVariables?: string;
+    restartOnError?: boolean;
+    placementStrategy?: string;
+    workerSelector?: Record<string, unknown>;
+    cpuOffloading?: boolean;
+    distributedInferenceAcrossWorkers?: boolean;
+    gpuSelector?: Record<string, unknown>;
+}) => {
+    const response = await axios.post('/api/v1/deployment/modelscope/evaluate', {
+        name: data.name,
+        model_scope_model_id: data.modelScopeModelId,
+        model_scope_file_path: data.modelScopeFilePath,
+        backend: data.backend,
+        replicas: data.replicas,
+        description: data.description,
+        categories: data.categories ?? [],
+        backend_parameters: data.backendParameters ?? [],
+        environment_variables: data.environmentVariables,
+        restart_on_error: data.restartOnError,
+        placement_strategy: data.placementStrategy,
+        worker_selector: data.workerSelector ?? {},
+        cpu_offloading: data.cpuOffloading,
+        distributed_inference_across_workers: data.distributedInferenceAcrossWorkers,
+        gpu_selector: data.gpuSelector,
     });
     return response;
 };

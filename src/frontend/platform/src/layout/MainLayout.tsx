@@ -17,7 +17,7 @@ import { bsConfirm } from "@/components/bs-ui/alertDialog/useConfirm";
 import { SelectHover, SelectHoverItem } from "@/components/bs-ui/select/hover";
 import { locationContext } from "@/contexts/locationContext";
 import i18next from "i18next";
-import { ChevronDown, Globe, Lock, MoonStar, Sun } from "lucide-react";
+import { Activity, ChevronDown, ChevronLeft, ChevronRight, Globe, Lock, MoonStar, Sun } from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,13 @@ export default function MainLayout() {
     // 角色
     const { user, setUser } = useContext(userContext);
     const { language, options, changLanguage, t } = useLanguage(user)
+    const [collapsed, setCollapsed] = useState(false)
+    const sidebarWidthClass = collapsed ? "w-[72px] min-w-[72px] px-2" : "w-[184px] min-w-[184px] px-3"
+    const navBaseClass = "navlink inline-flex rounded-lg w-full hover:bg-nav-hover h-12 mb-[3.5px]"
+    const navPaddingClass = collapsed ? "justify-center px-2" : "px-6"
+    const navTextClass = collapsed ? "hidden" : "mx-[14px] max-w-[48px] text-[14px] leading-[48px]"
+    const toggleSidebar = () => setCollapsed(prev => !prev)
+    const toggleLabel = collapsed ? t('menu.expandSidebar') : t('menu.collapseSidebar')
 
     const handleLogout = () => {
         bsConfirm({
@@ -129,103 +136,125 @@ export default function MainLayout() {
                 </div>
             </div>
             <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
-                <div className="relative z-10 bg-background-main h-full w-[184px] min-w-[184px] px-3  shadow-x1 flex justify-between text-center ">
-                    <nav className="">
+                <div className={`relative z-10 bg-background-main h-full ${sidebarWidthClass} shadow-x1 flex flex-col`}>
+                    <nav className="flex-1 overflow-y-auto">
                         {appConfig.benchMenu && (
                             <a
                                 href="/workspace/"  // 直接使用根路径
                                 target="_blank"
-                                className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}
+                                className={`${navBaseClass} ${navPaddingClass}`}
                             >
                                 <ApplicationIcon className="h-6 w-6 my-[12px]" />
-                                <span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">
+                                <span className={navTextClass}>
                                     {t('menu.workspace')}
                                 </span>
                             </a>
                         )}
-                        <NavLink to='/' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                            <ApplicationIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.app')}</span>
+                        <NavLink to='/' className={`${navBaseClass} ${navPaddingClass}`}>
+                            <ApplicationIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.app')}</span>
                         </NavLink>
                         {
                             isMenu('build') &&
-                            <NavLink to='/build' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`} >
-                                <TechnologyIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.skills')}</span>
+                            <NavLink to='/build' className={`${navBaseClass} ${navPaddingClass}`} >
+                                <TechnologyIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.skills')}</span>
                             </NavLink>
                         }
                         {
                             isMenu('knowledge') &&
-                            <NavLink to='/filelib' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                <KnowledgeIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.knowledge')}</span>
+                            <NavLink to='/filelib' className={`${navBaseClass} ${navPaddingClass}`}>
+                                <KnowledgeIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.knowledge')}</span>
                             </NavLink>
                         }
                         {
                             user.role === 'admin' && <>
-                                <NavLink to='/dataset' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                    <DatasetIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.dataset')}</span>
+                                <NavLink to='/dataset' className={`${navBaseClass} ${navPaddingClass}`}>
+                                    <DatasetIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.dataset')}</span>
                                 </NavLink>
                             </>
                         }
                         {
                             isMenu('model') &&
-                            <NavLink to='/model' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                <ModelIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.models')}</span>
+                            <NavLink to='/model' className={`${navBaseClass} ${navPaddingClass}`}>
+                                <ModelIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.models')}</span>
                             </NavLink>
+                        }
+                        {
+                            isAdmin && (
+                                <NavLink to='/monitor' className={`${navBaseClass} ${navPaddingClass}`}>
+                                    <Activity className="h-6 w-6 my-[12px]" />
+                                    <span className={navTextClass}>{t('menu.monitor')}</span>
+                                </NavLink>
+                            )
                         }
                         {
                             isMenu('evaluation') &&
-                            <NavLink to='/evaluation' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                <EvaluatingIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.evaluation')}</span>
+                            <NavLink to='/evaluation' className={`${navBaseClass} ${navPaddingClass}`}>
+                                <EvaluatingIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.evaluation')}</span>
                             </NavLink>
                         }
                         {
-                            <NavLink to='/label' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                <LabelIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.annotation')}</span>
+                            <NavLink to='/label' className={`${navBaseClass} ${navPaddingClass}`}>
+                                <LabelIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.annotation')}</span>
                             </NavLink>
                         }
                         {
                             isAdmin && <>
-                                <NavLink to='/log' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                    <LogIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.log')}</span>
+                                <NavLink to='/log' className={`${navBaseClass} ${navPaddingClass}`}>
+                                    <LogIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.log')}</span>
                                 </NavLink>
                             </>
                         }
                         {
                             isAdmin && <>
-                                <NavLink to='/sys' className={`navlink inline-flex rounded-lg w-full px-6 hover:bg-nav-hover h-12 mb-[3.5px]`}>
-                                    <SystemIcon className="h-6 w-6 my-[12px]" /><span className="mx-[14px] max-w-[48px] text-[14px] leading-[48px]">{t('menu.system')}</span>
+                                <NavLink to='/sys' className={`${navBaseClass} ${navPaddingClass}`}>
+                                    <SystemIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.system')}</span>
                                 </NavLink>
                             </>
                         }
                     </nav>
-                    {!appConfig.noFace && <div className="absolute left-0 bottom-0 w-[180px] p-2">
-                        <div className="help flex items-between my-3">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger className="h-[72px] w-[78px] cursor-pointer bg-background-tip rounded-lg hover:bg-[#1b1f23] hover:text-[white] transition-all dark:hover:bg-background-tip-darkhover">
-                                        <Link to={"https://github.com/dataelement/bisheng"} target="_blank">
-                                            <GithubIcon className="side-bar-button-size mx-auto w-5 h-5 " />
-                                            <span className="block text-[12px] mt-[8px] font-bold">{t("menu.github")}</span>
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{t("menu.github")}</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <Separator className="mx-1" orientation="vertical" />
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger className="h-[72px] w-[78px] cursor-pointer bg-background-tip rounded-lg p-0 align-top hover:bg-[#0055e3] hover:text-[white]  transition-all">
-                                        <Link className="m-0 p-0" to={"https://m7a7tqsztt.feishu.cn/wiki/ZxW6wZyAJicX4WkG0NqcWsbynde"} target="_blank">
-                                            <BookOpenIcon className=" mx-auto w-5 h-5" />
-                                            <span className="block text-[12px] mt-[8px] font-bold">{t("menu.bookopen")}</span>
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{t('menu.document')}</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    </div>}
+                    <div className="pb-4 flex flex-col items-center gap-3">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    className="h-8 w-8 bg-header-icon rounded-lg flex items-center justify-center cursor-pointer"
+                                    onClick={toggleSidebar}
+                                    aria-label={toggleLabel}
+                                >
+                                    {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                                </TooltipTrigger>
+                                <TooltipContent side="right"><p>{toggleLabel}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        {!collapsed && !appConfig.noFace && (
+                            <div className="help flex items-center justify-between w-full px-1">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger className="h-[72px] flex-1 cursor-pointer bg-background-tip rounded-lg hover:bg-[#1b1f23] hover:text-[white] transition-all dark:hover:bg-background-tip-darkhover mx-1">
+                                            <Link className="block" to={"https://github.com/dataelement/bisheng"} target="_blank">
+                                                <GithubIcon className="side-bar-button-size mx-auto w-5 h-5 " />
+                                                <span className="block text-[12px] mt-[8px] font-bold">{t("menu.github")}</span>
+                                            </Link>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{t("menu.github")}</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <Separator className="mx-1 h-10" orientation="vertical" />
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger className="h-[72px] flex-1 cursor-pointer bg-background-tip rounded-lg p-0 align-top hover:bg-[#0055e3] hover:text-[white]  transition-all mx-1">
+                                            <Link className="block m-0 p-0" to={"https://m7a7tqsztt.feishu.cn/wiki/ZxW6wZyAJicX4WkG0NqcWsbynde"} target="_blank">
+                                                <BookOpenIcon className=" mx-auto w-5 h-5" />
+                                                <span className="block text-[12px] mt-[8px] font-bold">{t("menu.bookopen")}</span>
+                                            </Link>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{t('menu.document')}</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="flex-1 bg-background-main-content rounded-lg w-[calc(100vw-184px)]">
+                <div className="flex-1 bg-background-main-content rounded-lg min-w-0">
                     <ErrorBoundary
                         onReset={() => window.location.href = window.location.href}
                         FallbackComponent={CrashErrorComponent}

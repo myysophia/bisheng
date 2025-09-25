@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/bs-ui/button";
 import { Badge } from "@/components/bs-ui/badge";
 import { useTranslation } from "react-i18next";
-import { Eye, Play, Square, Trash2, Copy, ExternalLink } from "lucide-react";
+import { Eye, Play, Square, Trash2 } from "lucide-react";
 import { useToast } from "@/components/bs-ui/toast/use-toast";
 
 import {
@@ -16,6 +16,8 @@ interface Deployment {
     modelId?: string;
     name: string;
     modelName: string;
+    source?: string;
+    modelScopeModelId?: string;
     status: 'running' | 'stopped' | 'pending' | 'error';
     replicas: number;
     readyReplicas?: number;
@@ -96,14 +98,6 @@ export default function DeploymentList({ deployments, onViewDetail, onRefresh }:
         }
     };
 
-    const copyEndpoint = (endpoint: string) => {
-        navigator.clipboard.writeText(endpoint);
-        message({
-            variant: 'success',
-            description: t('endpointCopied')
-        });
-    };
-
     return (
         <div className="px-4">
             <Table>
@@ -111,49 +105,26 @@ export default function DeploymentList({ deployments, onViewDetail, onRefresh }:
                     <TableRow>
                         <TableHead>{t('deploymentName')}</TableHead>
                         <TableHead>{t('modelName')}</TableHead>
+                        <TableHead>{t('source')}</TableHead>
                         <TableHead>{t('status')}</TableHead>
-                        <TableHead>{t('replicas')}</TableHead>
-                        <TableHead>{t('gpuCount')}</TableHead>
-                        <TableHead>{t('memory')}</TableHead>
-                        <TableHead>{t('endpoint')}</TableHead>
                         <TableHead>{t('createdTime')}</TableHead>
                         <TableHead className="text-right">{t('actions')}</TableHead>
                     </TableRow>
                 </TableHeader>
-                <TableBody>
-                    {deployments.map((deployment) => (
-                        <TableRow key={deployment.id}>
-                            <TableCell className="font-medium">{deployment.name}</TableCell>
-                            <TableCell>{deployment.modelName}</TableCell>
-                            <TableCell>{getStatusBadge(deployment.status)}</TableCell>
-                            <TableCell>{deployment.replicas}</TableCell>
-                            <TableCell>{deployment.gpu ?? '-'}</TableCell>
-                            <TableCell>{deployment.memory ?? '-'}</TableCell>
-                            <TableCell>
-                                {deployment.endpoint ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs truncate max-w-[200px]">{deployment.endpoint}</span>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6"
-                                            onClick={() => copyEndpoint(deployment.endpoint)}
-                                        >
-                                            <Copy className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6"
-                                            onClick={() => window.open(deployment.endpoint, '_blank')}
-                                        >
-                                            <ExternalLink className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                )}
-                            </TableCell>
+                        <TableBody>
+                            {deployments.map((deployment) => (
+                                <TableRow key={deployment.id}>
+                                    <TableCell className="font-medium">{deployment.name}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span>{deployment.modelName}</span>
+                                            {deployment.modelScopeModelId && (
+                                                <span className="text-xs text-muted-foreground">{deployment.modelScopeModelId}</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{deployment.source || 'ModelScope'}</TableCell>
+                                    <TableCell>{getStatusBadge(deployment.status)}</TableCell>
                             <TableCell>{deployment.createdAt}</TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">

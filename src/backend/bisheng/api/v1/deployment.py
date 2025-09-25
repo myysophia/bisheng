@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -194,6 +194,23 @@ async def get_modelscope_model_detail(
         return resp_500(message=str(e))
 
 
+@router.post('/modelscope/evaluate', summary="评估 ModelScope 模型部署可行性")
+async def evaluate_modelscope_model(
+    payload: DeploymentCreate,
+    login_user: UserPayload = Depends(get_login_user)
+):
+    try:
+        service = GPUStackService()
+        evaluate_payload = payload.dict()
+        evaluate_payload["environment_variables"] = _parse_env_string(
+            evaluate_payload.get("environment_variables")
+        )
+        result = await service.evaluate_modelscope_model(evaluate_payload)
+        return resp_200(data=result)
+    except Exception as e:
+        return resp_500(message=str(e))
+
+
 @router.get('/{deployment_id}', summary="获取部署详情")
 async def get_deployment_detail(
     deployment_id: str,
@@ -357,6 +374,47 @@ async def get_available_resources(
         service = GPUStackService()
         resources = await service.get_available_resources()
         return resp_200(data=resources)
+    except Exception as e:
+        return resp_500(message=str(e))
+
+
+@router.get('/resources/workers', summary="获取 Worker 列表")
+async def list_workers(
+    request: Request,
+    login_user: UserPayload = Depends(get_login_user)
+):
+    try:
+        service = GPUStackService()
+        params = dict(request.query_params)
+        # 将分页参数转换为整数
+        for key in ["page", "per_page", "cluster_id"]:
+            if key in params:
+                try:
+                    params[key] = int(params[key])
+                except (TypeError, ValueError):
+                    params.pop(key, None)
+        workers = await service.list_workers(params)
+        return resp_200(data=workers)
+    except Exception as e:
+        return resp_500(message=str(e))
+
+
+@router.get('/resources/gpus', summary="获取 GPU 设备列表")
+async def list_gpu_devices(
+    request: Request,
+    login_user: UserPayload = Depends(get_login_user)
+):
+    try:
+        service = GPUStackService()
+        params = dict(request.query_params)
+        for key in ["page", "per_page", "worker_id"]:
+            if key in params:
+                try:
+                    params[key] = int(params[key])
+                except (TypeError, ValueError):
+                    params.pop(key, None)
+        gpu_devices = await service.list_gpu_devices(params)
+        return resp_200(data=gpu_devices)
     except Exception as e:
         return resp_500(message=str(e))
 
