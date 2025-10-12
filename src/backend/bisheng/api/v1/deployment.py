@@ -41,7 +41,7 @@ class DeploymentCreate(BaseModel):
     name: str = Field(..., description="部署名称")
     model_scope_model_id: str = Field(..., description="ModelScope 仓库 ID")
     model_scope_file_path: Optional[str] = Field(None, description="ModelScope 文件路径")
-    backend: str = Field("llama-box", description="推理后端类型")
+    backend: str = Field("vllm", description="推理后端类型")
     replicas: int = Field(1, ge=0, description="副本数")
     description: Optional[str] = Field("", description="描述")
     categories: List[str] = Field(default_factory=list, description="模型标签")

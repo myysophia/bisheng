@@ -76,6 +76,8 @@
 
     "actions": "操作",
     "viewDetail": "查看详情",
+    "confirm": "确认",
+    "processing": "处理中...",
     "start": "启动",
     "stop": "停止",
     "endpoint": "访问地址",
@@ -86,6 +88,7 @@
     "statusStopped": "已停止",
     "statusPending": "启动中",
     "statusError": "异常",
+    "statusPaused": "已暂停",
 
     "deploymentStarting": "正在启动部署 {{name}}",
     "deploymentStartFailed": "启动部署失败",
@@ -93,6 +96,11 @@
     "deploymentStopFailed": "停止部署失败",
     "deploymentDeleted": "已删除部署 {{name}}",
     "deploymentDeleteFailed": "删除部署失败",
+    "deploymentWaitingReady": "部署已创建，正在等待实例就绪…",
+    "confirmStopTitle": "确认停止部署 {{name}}？",
+    "confirmStopDescription": "停止后将释放计算资源，可随时重新启动。",
+    "confirmDeleteTitle": "确认删除部署 {{name}}？",
+    "confirmDeleteDescription": "删除后将无法恢复，该部署的访问地址会立即失效。",
     "endpointCopied": "已复制访问地址",
     "noDeployments": "暂无部署",
 
@@ -117,6 +125,7 @@
     "description": "描述",
     "descriptionPlaceholder": "请输入描述",
     "modelScopeFilePath": "模型文件",
+    "modelScopeFileRequired": "请选择具体的模型文件",
     "modelScopeFilePlaceholder": "可选，填写具体模型文件路径",
     "selectFile": "选择文件",
 
@@ -132,6 +141,7 @@
     "runtimeOptions": "运行配置",
     "runtimeOptionsDesc": "配置推理运行时的高级选项",
     "cpuOffloadHint": "显存不足时将部分权重卸载到 CPU",
+    "cpuOffloadUnsupportedHint": "仅 GGUF 模型支持 CPU Offloading",
     "distributedInference": "分布式推理",
     "distributedInferenceHint": "允许跨 Worker 切分模型运行",
     "restartOnError": "故障自动重启",

@@ -76,6 +76,8 @@
 
     "actions": "Actions",
     "viewDetail": "View Details",
+    "confirm": "Confirm",
+    "processing": "Processing...",
     "start": "Start",
     "stop": "Stop",
     "endpoint": "Endpoint",
@@ -86,6 +88,7 @@
     "statusStopped": "Stopped",
     "statusPending": "Pending",
     "statusError": "Error",
+    "statusPaused": "Paused",
 
     "deploymentStarting": "Starting deployment {{name}}",
     "deploymentStartFailed": "Failed to start deployment",
@@ -93,6 +96,11 @@
     "deploymentStopFailed": "Failed to stop deployment",
     "deploymentDeleted": "Deleted deployment {{name}}",
     "deploymentDeleteFailed": "Failed to delete deployment",
+    "deploymentWaitingReady": "Deployment created. Waiting for instances to become ready…",
+    "confirmStopTitle": "Stop deployment {{name}}?",
+    "confirmStopDescription": "Stopping will release computing resources and can be restarted later.",
+    "confirmDeleteTitle": "Delete deployment {{name}}?",
+    "confirmDeleteDescription": "Deletion cannot be undone and the endpoint will no longer be accessible.",
     "endpointCopied": "Endpoint copied",
     "noDeployments": "No deployments",
 
@@ -117,6 +125,7 @@
     "description": "Description",
     "descriptionPlaceholder": "Enter description",
     "modelScopeFilePath": "Model File",
+    "modelScopeFileRequired": "Please select a specific model file",
     "modelScopeFilePlaceholder": "Optional, specify the model file path",
     "selectFile": "Select file",
 
@@ -140,6 +149,7 @@
     "runtimeOptions": "Runtime Options",
     "runtimeOptionsDesc": "Configure runtime behaviours",
     "cpuOffloadHint": "Offload weights to CPU when GPU memory is insufficient",
+    "cpuOffloadUnsupportedHint": "CPU Offloading is only supported for GGUF models",
     "distributedInference": "Distributed Inference",
     "distributedInferenceHint": "Allow splitting model across workers",
     "restartOnError": "Auto Restart",

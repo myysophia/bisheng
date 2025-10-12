@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/bs-ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/bs-ui/card";
@@ -20,7 +20,7 @@ interface DeploymentInfo {
     id: string;
     name: string;
     modelName: string;
-    status: 'running' | 'stopped' | 'pending' | 'error';
+    status: 'running' | 'stopped' | 'pending' | 'paused' | 'error';
     replicas: number;
     readyReplicas: number;
     gpu?: string | number | null;
@@ -86,12 +86,36 @@ export default function DeploymentDetail({ deploymentId, onBack }: DeploymentDet
             running: { variant: 'success' as const, label: t('statusRunning') },
             stopped: { variant: 'secondary' as const, label: t('statusStopped') },
             pending: { variant: 'warning' as const, label: t('statusPending') },
+            paused: { variant: 'secondary' as const, label: t('statusPaused') },
             error: { variant: 'destructive' as const, label: t('statusError') }
         };
 
-        const config = statusConfig[status.toLowerCase()] || statusConfig.error;
+        const normalizedStatus = status.toLowerCase();
+        const config = statusConfig[normalizedStatus] || statusConfig.error;
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
+
+    const instancesToRender = useMemo(() => {
+        if (!deployment) return [];
+        if (Array.isArray(deployment.instances) && deployment.instances.length > 0) {
+            return deployment.instances;
+        }
+        if (deployment.status === 'stopped' || deployment.status === 'paused') {
+            return [
+                {
+                    id: `${deployment.id}-${deployment.status}`,
+                    name: deployment.name,
+                    status: deployment.status,
+                    node: '-',
+                    gpu: typeof deployment.gpu === 'number' ? `${deployment.gpu} GPUs` : (deployment.gpu ?? '-'),
+                    memory: deployment.memory ?? '-',
+                    cpu: deployment.cpuCores ? `${deployment.cpuCores} cores` : '-',
+                    startTime: deployment.updatedAt,
+                },
+            ];
+        }
+        return [];
+    }, [deployment]);
 
     if (loading) {
         return (
@@ -252,12 +276,12 @@ export default function DeploymentDetail({ deploymentId, onBack }: DeploymentDet
                             <CardHeader>
                                 <CardTitle>{t('instanceList')}</CardTitle>
                                 <CardDescription>
-                                    {t('totalInstances', { count: deployment.instances.length })}
+                                    {t('totalInstances', { count: instancesToRender.length })}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {deployment.instances.map(instance => (
+                                    {instancesToRender.map(instance => (
                                         <Card key={instance.id}>
                                             <CardContent className="pt-6">
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

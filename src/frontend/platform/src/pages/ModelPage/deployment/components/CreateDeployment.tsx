@@ -70,6 +70,11 @@ interface EvaluationResult {
     error_message?: string | null;
 }
 
+type EvaluationCacheEntry = {
+    evaluation: EvaluationResult | null;
+    status: ModelScopeItem['evaluationStatus'];
+};
+
 const backendOptions = [
     { value: "llama-box", label: "Llama Box" },
     { value: "vllm", label: "vLLM" },
@@ -190,6 +195,12 @@ const extractEvaluationMessage = (evaluation?: EvaluationResult | null): string 
     );
 };
 
+const buildCacheKey = (value?: string | number | null): string | undefined => {
+    if (value === undefined || value === null) return undefined;
+    const normalized = String(value).trim().toLowerCase();
+    return normalized ? normalized : undefined;
+};
+
 const normalizeModelScopeItem = (item: any): ModelScopeItem => {
     if (!item || typeof item !== "object") {
         return item as ModelScopeItem;
@@ -275,6 +286,12 @@ const resolveRepositoryId = (item: ModelScopeItem | null | undefined): string | 
     return null;
 };
 
+const resolveCacheKeyFromModel = (model: ModelScopeItem | null | undefined): string | undefined => {
+    if (!model) return undefined;
+    const repositoryId = resolveRepositoryId(model) || model.repository_id || model.id;
+    return buildCacheKey(repositoryId);
+};
+
 export default function CreateDeployment({ onBack, onSuccess }: CreateDeploymentProps) {
     const { t } = useTranslation("model");
     const { message } = useToast();
@@ -296,6 +313,7 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
     const [modelDetail, setModelDetail] = useState<ModelScopeDetail | null>(null);
     const [availableFiles, setAvailableFiles] = useState<Array<{ id: string; label: string }>>([]);
     const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
+    const [evaluationCache, setEvaluationCache] = useState<Record<string, EvaluationCacheEntry>>({});
 
     const lastAutoEvaluatedIdRef = useRef<string | null>(null);
 
@@ -303,15 +321,18 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
         name: "",
         modelScopeModelId: "",
         modelScopeFilePath: "",
-        backend: "llama-box",
+        backend: "vllm",
         replicas: 1,
         description: "",
         environmentVariables: "",
-        cpuOffloading: true,
+        cpuOffloading: false,
         distributedInferenceAcrossWorkers: true,
         placementStrategy: "spread",
         restartOnError: true,
     });
+
+    const allowCpuOffloading = selectedModel?.isGGUF ?? false;
+    const cpuOffloadingValue = allowCpuOffloading ? formData.cpuOffloading : false;
 
     const updateForm = (key: keyof typeof formData, value: unknown) => {
         setFormData((prev) => ({
@@ -322,19 +343,32 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
 
     const updateModelEvaluation = (modelId: string | undefined, evaluation: EvaluationResult | null) => {
         if (!modelId) return;
+        const targetKey = buildCacheKey(modelId);
+        if (!targetKey) return;
+
         const status = determineEvaluationStatus(evaluation);
+        setEvaluationCache((prev) => ({
+            ...prev,
+            [targetKey]: {
+                evaluation,
+                status,
+            },
+        }));
+
         setModels((prev) =>
-            prev.map((model) =>
-                (model.id === modelId || model.repository_id === modelId)
-                    ? { ...model, evaluation, evaluationStatus: status }
-                    : model
-            )
+            prev.map((model) => {
+                const modelKey = resolveCacheKeyFromModel(model);
+                if (modelKey !== targetKey) return model;
+                return { ...model, evaluation, evaluationStatus: status };
+            })
         );
-        setSelectedModel((prev) =>
-            prev && (prev.id === modelId || prev.repository_id === modelId)
-                ? { ...prev, evaluation, evaluationStatus: status }
-                : prev
-        );
+
+        setSelectedModel((prev) => {
+            if (!prev) return prev;
+            const currentKey = resolveCacheKeyFromModel(prev);
+            if (currentKey !== targetKey) return prev;
+            return { ...prev, evaluation, evaluationStatus: status };
+        });
     };
 
     useEffect(() => {
@@ -353,14 +387,24 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
 
     useEffect(() => {
         if (!selectedModel || !modelDetail) return;
-        const repoId = selectedModel.repository_id || selectedModel.id;
-        if (!repoId || selectedModel.isGGUF) return;
+        if (selectedModel.isGGUF) return;
+
+        const repoIdentifier = selectedModel.repository_id || selectedModel.id;
+        const cacheKey = buildCacheKey(repoIdentifier);
+        if (!cacheKey) return;
+
+        const cachedEntry = evaluationCache[cacheKey];
+        if (cachedEntry && cachedEntry.evaluation !== null) {
+            lastAutoEvaluatedIdRef.current = cacheKey;
+            return;
+        }
+
         if (evaluating) return;
-        if (lastAutoEvaluatedIdRef.current === repoId) return;
-        lastAutoEvaluatedIdRef.current = repoId;
+        if (lastAutoEvaluatedIdRef.current === cacheKey) return;
+        lastAutoEvaluatedIdRef.current = cacheKey;
         handleEvaluate({ silent: true, ignoreFilePath: true });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedModel, modelDetail, evaluating]);
+    }, [selectedModel, modelDetail, evaluating, evaluationCache]);
 
     const loadModels = async () => {
         setLoadingModels(true);
@@ -383,7 +427,18 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
             const items = Array.isArray(rawItems)
                 ? (rawItems as ModelScopeItem[]).map((model) => normalizeModelScopeItem(model))
                 : [];
-            setModels(items);
+            const itemsWithCache = items.map((model) => {
+                const cacheKey = resolveCacheKeyFromModel(model);
+                if (!cacheKey) return model;
+                const cachedEntry = evaluationCache[cacheKey];
+                if (!cachedEntry) return model;
+                return {
+                    ...model,
+                    evaluation: cachedEntry.evaluation,
+                    evaluationStatus: cachedEntry.status,
+                };
+            });
+            setModels(itemsWithCache);
             const totalValue =
                 (response &&
                     ((response as any).total ||
@@ -418,8 +473,8 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
             const normalizedTotal = normalizeTotal(totalValue) ?? rawTotal ?? items.length;
             setTotalModels(normalizedTotal);
 
-            if (!selectedModel && items.length > 0) {
-                handleSelectModel(items[0]);
+            if (!selectedModel && itemsWithCache.length > 0) {
+                handleSelectModel(itemsWithCache[0]);
             }
         } catch (error: any) {
             message({
@@ -433,12 +488,28 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
 
     const handleSelectModel = async (item: ModelScopeItem) => {
         const normalizedItem = normalizeModelScopeItem(item);
-        setSelectedModel(normalizedItem);
-        setEvaluationResult(null);
-        setAvailableFiles([]);
-        updateForm("modelScopeFilePath", "");
-
         const repositoryId = resolveRepositoryId(normalizedItem);
+        const cacheKey = buildCacheKey(repositoryId);
+        const cachedEntry = cacheKey ? evaluationCache[cacheKey] : undefined;
+        const modelWithCache = cachedEntry
+            ? { ...normalizedItem, evaluation: cachedEntry.evaluation, evaluationStatus: cachedEntry.status }
+            : normalizedItem;
+
+        setSelectedModel(modelWithCache);
+        setEvaluationResult(cachedEntry?.evaluation ?? null);
+        setAvailableFiles([]);
+        setFormData((prev) => ({
+            ...prev,
+            modelScopeFilePath: "",
+            cpuOffloading: normalizedItem.isGGUF ? true : false,
+        }));
+
+        if (cacheKey && cachedEntry && cachedEntry.evaluation !== null) {
+            lastAutoEvaluatedIdRef.current = cacheKey;
+        } else {
+            lastAutoEvaluatedIdRef.current = null;
+        }
+
         if (!repositoryId) {
             message({
                 variant: "error",
@@ -458,6 +529,12 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
 
             const files = extractFilesFromDetail(normalizedDetail);
             setAvailableFiles(files);
+            if (files.length > 0) {
+                setFormData((prev) => ({
+                    ...prev,
+                    modelScopeFilePath: prev.modelScopeFilePath?.trim() ? prev.modelScopeFilePath : files[0].label,
+                }));
+            }
         } catch (error: any) {
             message({
                 variant: "error",
@@ -471,19 +548,40 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
     const handleEvaluate = async (options?: { silent?: boolean; ignoreFilePath?: boolean }) => {
         const silent = options?.silent ?? false;
         const ignoreFilePath = options?.ignoreFilePath ?? false;
-        if (!formData.modelScopeModelId) {
+        const normalizedModelId = formData.modelScopeModelId.trim();
+        if (!normalizedModelId) {
             message({ variant: "error", description: t("modelRequired") });
             return;
         }
 
+        if (normalizedModelId !== formData.modelScopeModelId) {
+            updateForm("modelScopeModelId", normalizedModelId);
+        }
+
+        const cacheKey = buildCacheKey(normalizedModelId);
+
         setEvaluating(true);
         setEvaluationResult(null);
         try {
+            const trimmedFilePath = formData.modelScopeFilePath?.trim();
+            if (!ignoreFilePath && availableFiles.length > 0 && !trimmedFilePath) {
+                if (!silent) {
+                    message({ variant: "warning", description: t("modelScopeFileRequired", { defaultValue: "请选择具体的模型文件" }) });
+                }
+                if (cacheKey) {
+                    lastAutoEvaluatedIdRef.current = cacheKey;
+                }
+                return;
+            }
+
+            const cpuOffloadingAllowed = selectedModel?.isGGUF ?? false;
+            const cpuOffloadingSetting = cpuOffloadingAllowed ? formData.cpuOffloading : false;
+
             const result = await evaluateModelScopeModelApi({
                 name: formData.name.trim() || buildDefaultName(selectedModel?.name),
-                modelScopeModelId: formData.modelScopeModelId,
-                modelScopeFilePath: !ignoreFilePath && formData.modelScopeFilePath?.trim()
-                    ? formData.modelScopeFilePath.trim()
+                modelScopeModelId: normalizedModelId,
+                modelScopeFilePath: !ignoreFilePath && trimmedFilePath
+                    ? trimmedFilePath
                     : undefined,
                 backend: formData.backend,
                 replicas: formData.replicas,
@@ -492,7 +590,7 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
                 restartOnError: formData.restartOnError,
                 placementStrategy: formData.placementStrategy,
                 workerSelector: {},
-                cpuOffloading: formData.cpuOffloading,
+                cpuOffloading: cpuOffloadingSetting,
                 distributedInferenceAcrossWorkers: formData.distributedInferenceAcrossWorkers,
                 categories: selectedModel?.tags ?? [],
                 backendParameters: [],
@@ -501,8 +599,10 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
             const evaluation = (result?.results && result.results[0]) as EvaluationResult | undefined;
             setEvaluationResult(evaluation ?? null);
             if (evaluation) {
-                updateModelEvaluation(formData.modelScopeModelId, evaluation);
-                lastAutoEvaluatedIdRef.current = formData.modelScopeModelId;
+                updateModelEvaluation(normalizedModelId, evaluation);
+                if (cacheKey) {
+                    lastAutoEvaluatedIdRef.current = cacheKey;
+                }
                 if (evaluation.compatible && !silent) {
                     message({ variant: "success", description: t("evaluationPassed", { defaultValue: "评估通过，可以提交部署" }) });
                 } else if (evaluation.error) {
@@ -511,13 +611,19 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
                     message({ variant: "warning", description: t("evaluationWarnings", { defaultValue: "评估存在警告，请检查配置" }) });
                 }
             } else {
-                updateModelEvaluation(formData.modelScopeModelId, null);
+                updateModelEvaluation(normalizedModelId, null);
+                if (cacheKey) {
+                    lastAutoEvaluatedIdRef.current = cacheKey;
+                }
                 if (!silent) {
                     message({ variant: "warning", description: t("evaluationNoResult", { defaultValue: "未返回评估结果" }) });
                 }
             }
         } catch (error: any) {
-            updateModelEvaluation(formData.modelScopeModelId, null);
+            updateModelEvaluation(normalizedModelId, null);
+            if (cacheKey) {
+                lastAutoEvaluatedIdRef.current = cacheKey;
+            }
             if (!silent) {
                 message({
                     variant: "error",
@@ -541,6 +647,9 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
 
         setIsSubmitting(true);
         try {
+            const cpuOffloadingAllowed = selectedModel?.isGGUF ?? false;
+            const cpuOffloadingSetting = cpuOffloadingAllowed ? formData.cpuOffloading : false;
+
             await createDeploymentApi({
                 name: formData.name.trim(),
                 modelScopeModelId: formData.modelScopeModelId.trim(),
@@ -552,13 +661,13 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
                 restartOnError: formData.restartOnError,
                 placementStrategy: formData.placementStrategy,
                 workerSelector: {},
-                cpuOffloading: formData.cpuOffloading,
+                cpuOffloading: cpuOffloadingSetting,
                 distributedInferenceAcrossWorkers: formData.distributedInferenceAcrossWorkers,
                 categories: selectedModel?.tags ?? [],
                 backendParameters: [],
             });
 
-            message({ variant: "success", description: t("deploymentCreatedSuccess") });
+            message({ variant: "success", description: t("deploymentWaitingReady", { defaultValue: "部署已创建，正在等待实例就绪…" }) });
             onSuccess();
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || t("deploymentCreatedFailed");
@@ -904,13 +1013,19 @@ export default function CreateDeployment({ onBack, onSuccess }: CreateDeployment
                                         <div>
                                             <Label htmlFor="cpuOffloading">CPU Offloading</Label>
                                             <p className="text-xs text-muted-foreground">
-                                                {t("cpuOffloadHint", { defaultValue: "显存不足时将部分权重卸载到 CPU" })}
+                                                {allowCpuOffloading
+                                                    ? t("cpuOffloadHint", { defaultValue: "显存不足时将部分权重卸载到 CPU" })
+                                                    : t("cpuOffloadUnsupportedHint", { defaultValue: "仅 GGUF 模型支持 CPU Offloading" })}
                                             </p>
                                         </div>
                                         <Switch
                                             id="cpuOffloading"
-                                            checked={formData.cpuOffloading}
-                                            onCheckedChange={(checked) => updateForm("cpuOffloading", checked)}
+                                            checked={cpuOffloadingValue}
+                                            disabled={!allowCpuOffloading}
+                                            onCheckedChange={(checked) => {
+                                                if (!allowCpuOffloading) return;
+                                                updateForm("cpuOffloading", checked);
+                                            }}
                                         />
                                     </div>
                                     <div className="flex items-center justify-between border rounded-lg px-3 py-2">

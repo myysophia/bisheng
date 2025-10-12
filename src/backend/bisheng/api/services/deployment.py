@@ -279,11 +279,21 @@ class GPUStackService(BaseService):
     ) -> Dict[str, Any]:
         """创建新部署（支持 ModelScope 模型）"""
         try:
+            # 验证必需的参数
+            model_scope_model_id = deployment_data.get("model_scope_model_id")
+            if not model_scope_model_id:
+                raise ValueError("model_scope_model_id 是必需的参数")
+            
+            # 处理可选的文件路径参数，确保不传递 None 值
+            model_scope_file_path = deployment_data.get("model_scope_file_path")
+            if model_scope_file_path is not None and not isinstance(model_scope_file_path, str):
+                logger.warning(f"model_scope_file_path 应该是字符串类型，当前类型: {type(model_scope_file_path)}")
+                model_scope_file_path = None
+            
             model_payload = {
                 "name": deployment_data["name"],
                 "source": "model_scope",
-                "model_scope_model_id": deployment_data["model_scope_model_id"],
-                "model_scope_file_path": deployment_data.get("model_scope_file_path"),
+                "model_scope_model_id": model_scope_model_id,
                 "backend": deployment_data.get("backend", "llama-box"),
                 "replicas": deployment_data.get("replicas", 1),
                 "description": deployment_data.get("description", ""),
@@ -300,11 +310,30 @@ class GPUStackService(BaseService):
                 "gpu_selector": deployment_data.get("gpu_selector"),
             }
 
+            if model_payload.get("cpu_offloading"):
+                allow_offloading = self._is_cpu_offloading_allowed(
+                    model_scope_model_id=model_scope_model_id,
+                    model_scope_file_path=model_scope_file_path,
+                    categories=model_payload.get("categories"),
+                )
+                if not allow_offloading:
+                    logger.info(
+                        "CPU offloading is disabled for non-GGUF model %s",
+                        model_scope_model_id,
+                    )
+                    model_payload["cpu_offloading"] = False
+            
+            # 只有当 model_scope_file_path 不为 None 且不为空字符串时才添加到 payload 中
+            if model_scope_file_path:
+                model_payload["model_scope_file_path"] = model_scope_file_path
+
             cleaned_payload = {
                 key: value
                 for key, value in model_payload.items()
                 if value is not None
             }
+
+            logger.info(f"创建 ModelScope 模型部署: {model_scope_model_id}, 文件路径: {model_scope_file_path}")
 
             model_response = await self._make_request(
                 "POST",
@@ -321,8 +350,15 @@ class GPUStackService(BaseService):
                 return deployment
             return self._convert_to_deployment(model_response)
 
+        except ValueError as ve:
+            logger.error(f"参数验证失败: {str(ve)}")
+            raise
         except Exception as e:
             logger.error(f"Failed to create deployment: {str(e)}")
+            # 检查是否是文件路径相关的错误
+            error_msg = str(e)
+            if "expected str, bytes or os.PathLike object, not NoneType" in error_msg:
+                raise Exception(f"部署创建失败：模型文件路径配置错误，model_scope_file_path 参数不能为 None。请提供有效的文件路径或留空。")
             raise
     
     async def get_deployment(
@@ -364,22 +400,30 @@ class GPUStackService(BaseService):
     ) -> Dict[str, Any]:
         """更新部署配置"""
         try:
-            update_data = {}
-            
+            model_id = await self._resolve_model_id(deployment_id)
+
+            overrides: Dict[str, Any] = {}
             if "replicas" in deployment_data:
-                update_data["replicas"] = deployment_data["replicas"]
+                overrides["replicas"] = deployment_data["replicas"]
             
             if "description" in deployment_data:
-                update_data["description"] = deployment_data["description"]
+                overrides["description"] = deployment_data["description"]
             
             if "environment_variables" in deployment_data:
-                update_data["env"] = deployment_data["environment_variables"]
+                overrides["env"] = deployment_data["environment_variables"]
+
+            if "categories" in deployment_data:
+                overrides["categories"] = deployment_data["categories"]
+
+            if "backend_parameters" in deployment_data:
+                overrides["backend_parameters"] = deployment_data["backend_parameters"]
+
+            payload = await self._build_model_update_payload(model_id, overrides)
             
-            model_id = await self._resolve_model_id(deployment_id)
             response = await self._make_request(
                 "PUT",
                 f"/v1/models/{model_id}",
-                json=update_data
+                json=payload
             )
             
             return self._convert_to_deployment(response)
@@ -387,6 +431,105 @@ class GPUStackService(BaseService):
         except Exception as e:
             logger.error(f"Failed to update deployment: {str(e)}")
             raise
+    
+    async def _build_model_update_payload(
+        self,
+        model_id: str,
+        overrides: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        构造 GPUStack 模型更新请求体，确保必需字段（name/source 等）被保留。
+        """
+        model_response = await self._make_request(
+            "GET",
+            f"/v1/models/{model_id}"
+        )
+
+        if not isinstance(model_response, dict):
+            raise Exception("Unexpected GPUStack response when fetching model details")
+
+        # GPUStack 更新接口至少需要 name 与 source，其他字段保持与当前一致
+        base_keys = [
+            "name",
+            "source",
+            "description",
+            "categories",
+            "backend",
+            "backend_version",
+            "backend_parameters",
+            "model_scope_model_id",
+            "model_scope_file_path",
+            "env",
+            "restart_on_error",
+            "placement_strategy",
+            "worker_selector",
+            "cpu_offloading",
+            "distributed_inference_across_workers",
+            "gpu_selector",
+        ]
+
+        payload: Dict[str, Any] = {}
+        for key in base_keys:
+            value = model_response.get(key)
+            if value is not None:
+                payload[key] = value
+
+        if "replicas" in model_response and "replicas" not in overrides:
+            payload["replicas"] = model_response.get("replicas")
+
+        # 合并 overrides，保留 falsy 但非 None 的值
+        for key, value in overrides.items():
+            if value is None:
+                continue
+            payload[key] = value
+
+        if payload.get("cpu_offloading"):
+            allow_offloading = self._is_cpu_offloading_allowed(
+                model_scope_model_id=payload.get("model_scope_model_id"),
+                model_scope_file_path=payload.get("model_scope_file_path"),
+                categories=payload.get("categories"),
+            )
+            if not allow_offloading:
+                payload["cpu_offloading"] = False
+
+        # GPUStack 返回 env 可能是 None；保证至少为字典
+        if payload.get("env") is None:
+            payload["env"] = {}
+
+        return payload
+
+    def _is_cpu_offloading_allowed(
+        self,
+        model_scope_model_id: Optional[str],
+        model_scope_file_path: Optional[str],
+        categories: Optional[Any],
+    ) -> bool:
+        """判断是否可以启用 CPU Offloading，仅 GGUF 模型支持"""
+        identifiers: List[str] = []
+        if isinstance(model_scope_file_path, str):
+            identifiers.append(model_scope_file_path.strip().lower())
+        if isinstance(model_scope_model_id, str):
+            identifiers.append(str(model_scope_model_id).strip().lower())
+
+        if any(identifier.endswith(".gguf") for identifier in identifiers if identifier):
+            return True
+
+        normalized_categories: List[Any] = []
+        if isinstance(categories, list):
+            normalized_categories = categories
+        elif isinstance(categories, dict):
+            normalized_categories = categories.get("items") or categories.get("Items") or []
+
+        for item in normalized_categories:
+            if isinstance(item, str) and item.strip().lower() == "gguf":
+                return True
+            if isinstance(item, dict):
+                for key in ("name", "Name", "tag", "Tag", "label", "Label", "value", "Value"):
+                    value = item.get(key)
+                    if isinstance(value, str) and value.strip().lower() == "gguf":
+                        return True
+
+        return False
     
     async def delete_deployment(
         self,
@@ -413,10 +556,11 @@ class GPUStackService(BaseService):
         try:
             # 更新副本数为原始值
             model_id = await self._resolve_model_id(deployment_id)
+            payload = await self._build_model_update_payload(model_id, {"replicas": 1})
             response = await self._make_request(
                 "PUT",
                 f"/v1/models/{model_id}",
-                json={"replicas": 1}  # 至少启动1个副本
+                json=payload
             )
             
             return self._convert_to_deployment(response)
@@ -434,10 +578,11 @@ class GPUStackService(BaseService):
         try:
             # 将副本数设为0来停止部署
             model_id = await self._resolve_model_id(deployment_id)
+            payload = await self._build_model_update_payload(model_id, {"replicas": 0})
             response = await self._make_request(
                 "PUT",
                 f"/v1/models/{model_id}",
-                json={"replicas": 0}
+                json=payload
             )
             
             return self._convert_to_deployment(response)
@@ -1017,12 +1162,22 @@ class GPUStackService(BaseService):
     async def evaluate_modelscope_model(self, deployment_data: Dict[str, Any]) -> Dict[str, Any]:
         """评估 ModelScope 模型的部署可行性"""
         try:
+            # 验证必需的参数
+            model_scope_model_id = deployment_data.get("model_scope_model_id")
+            if not model_scope_model_id:
+                raise ValueError("model_scope_model_id 是必需的参数")
+            
+            # 处理可选的文件路径参数，确保不传递 None 值
+            model_scope_file_path = deployment_data.get("model_scope_file_path")
+            if model_scope_file_path is not None and not isinstance(model_scope_file_path, str):
+                logger.warning(f"model_scope_file_path 应该是字符串类型，当前类型: {type(model_scope_file_path)}")
+                model_scope_file_path = None
+            
             spec = {
                 "source": "model_scope",
                 "name": deployment_data.get("name"),
                 "description": deployment_data.get("description"),
-                "model_scope_model_id": deployment_data.get("model_scope_model_id"),
-                "model_scope_file_path": deployment_data.get("model_scope_file_path"),
+                "model_scope_model_id": model_scope_model_id,
                 "backend": deployment_data.get("backend"),
                 "replicas": deployment_data.get("replicas", 1),
                 "categories": deployment_data.get("categories"),
@@ -1037,19 +1192,82 @@ class GPUStackService(BaseService):
                 ),
                 "gpu_selector": deployment_data.get("gpu_selector"),
             }
+            
+            # 只有当 model_scope_file_path 不为 None 且不为空字符串时才添加到 spec 中
+            if model_scope_file_path:
+                spec["model_scope_file_path"] = model_scope_file_path
 
+            if spec.get("cpu_offloading"):
+                allow_offloading = self._is_cpu_offloading_allowed(
+                    model_scope_model_id=model_scope_model_id,
+                    model_scope_file_path=model_scope_file_path,
+                    categories=spec.get("categories"),
+                )
+                if not allow_offloading:
+                    logger.info(
+                        "CPU offloading disabled during evaluation for non-GGUF model %s",
+                        model_scope_model_id,
+                    )
+                    spec["cpu_offloading"] = False
+
+            # 过滤掉 None 值，但保留空字符串和其他 falsy 值（除了 None）
             spec = {k: v for k, v in spec.items() if v is not None}
 
             payload = {"model_specs": [spec]}
 
+            logger.info(f"评估 ModelScope 模型: {model_scope_model_id}, 文件路径: {model_scope_file_path}")
+            
             response = await self._make_request(
                 "POST",
                 "/v1/model-evaluations",
                 json=payload
             )
+
+            # GPUStack 会在返回体中携带 error_message，而非直接抛出异常
+            results = response.get("results") if isinstance(response, dict) else None
+            if isinstance(results, list):
+                for item in results:
+                    if not isinstance(item, dict):
+                        continue
+
+                    error_message = item.get("error_message") or ""
+                    if not isinstance(error_message, str):
+                        continue
+
+                    normalized_message = error_message.strip()
+                    if not normalized_message:
+                        continue
+
+                    patterns = [
+                        "expected str, bytes or os.PathLike object, not NoneType",
+                        "Failed to get the file for model",
+                    ]
+                    if any(pattern in normalized_message for pattern in patterns):
+                        friendly_message = (
+                            "评估失败：GPUStack 未能定位模型文件。请在“模型文件”字段填写具体的权重文件路径"
+                            "（例如 *.bin 或 *.gguf），然后重试评估。"
+                        )
+                        item["error_message"] = friendly_message
+
+                        compatibility_messages = item.get("compatibility_messages")
+                        if not isinstance(compatibility_messages, list):
+                            compatibility_messages = [] if compatibility_messages is None else [str(compatibility_messages)]
+
+                        hint = "需要提供具体的模型文件路径供部署节点下载。"
+                        if hint not in compatibility_messages:
+                            compatibility_messages.append(hint)
+                        item["compatibility_messages"] = compatibility_messages
+
             return response
+        except ValueError as ve:
+            logger.error(f"参数验证失败: {str(ve)}")
+            raise
         except Exception as e:
             logger.error(f"Failed to evaluate ModelScope model: {str(e)}")
+            # 检查是否是文件路径相关的错误
+            error_msg = str(e)
+            if "expected str, bytes or os.PathLike object, not NoneType" in error_msg:
+                raise Exception(f"评估存在警告，请检查配置：模型文件路径配置错误，model_scope_file_path 参数不能为 None。请提供有效的文件路径或留空。")
             raise
     
     # 辅助方法
@@ -1176,29 +1394,64 @@ class GPUStackService(BaseService):
         # 优先使用instance的state字段
         if "state" in model_data:
             state = model_data.get("state", "unknown").lower()
-            if state == "running":
+            running_states = {"running", "ready", "active"}
+            pending_states = {
+                "pending",
+                "initializing",
+                "starting",
+                "creating",
+                "provisioning",
+                "pulling",
+                "downloading",
+                "installing",
+                "deploying",
+                "queued",
+                "preparing",
+                "scaling",
+                "updating",
+            }
+            stopped_states = {"stopped", "stopping", "terminated", "deleted", "inactive"}
+            error_states = {"error", "failed", "crashed"}
+
+            if state in running_states:
                 return "running"
-            elif state == "stopped":
+            elif state in stopped_states:
                 return "stopped"
-            elif state in ["pending", "initializing", "starting"]:
+            elif state in pending_states:
                 return "pending"
-            elif state in ["error", "failed"]:
+            elif state in error_states:
                 return "error"
             else:
-                return "stopped"
+                # 未识别状态时，根据副本信息再判断
+                return self._derive_status_from_replicas(model_data)
         
         # 如果没有state字段，使用replicas推断
+        return self._derive_status_from_replicas(model_data)
+
+    def _derive_status_from_replicas(self, model_data: Dict[str, Any]) -> str:
+        """根据副本数推导状态"""
         replicas = model_data.get("replicas", 0)
-        ready_replicas = model_data.get("ready_replicas", 0)
-        
-        if replicas == 0:
-            return "stopped"
-        elif ready_replicas == replicas:
-            return "running"
-        elif ready_replicas > 0:
+        desired_replicas = (
+            model_data.get("desired_replicas")
+            or model_data.get("desiredReplicas")
+            or replicas
+        )
+        ready_replicas = (
+            model_data.get("ready_replicas", 0)
+            or model_data.get("running_replicas", 0)
+        )
+
+        if desired_replicas and desired_replicas > 0:
+            if ready_replicas >= desired_replicas:
+                return "running"
+            # 目标副本大于0但尚未就绪，认为正在部署
             return "pending"
-        else:
-            return "error"
+
+        if replicas == 0 and desired_replicas == 0:
+            return "stopped"
+        if ready_replicas > 0:
+            return "pending"
+        return "pending"
     
     def _get_endpoint(self, model_data: Dict[str, Any]) -> str:
         """获取API端点"""
