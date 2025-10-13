@@ -343,7 +343,7 @@ print(response.text)# 输出工作流的响应`
         "name": "测试图片.png"
       }
     ],
-    "source_url": "",  # 知识库问答溯源页面地址，需要自己拼接毕昇的前端地址。具体是否支持溯源请参考产品文档
+    "source_url": "",  # 知识库问答溯源页面地址，需要自己拼接E-Agen't的前端地址。具体是否支持溯源请参考产品文档
     "extra": "{\"qa\": \"本答案来源于已有问答库: QA 知识库\", \"url\": null}"  # QA知识库溯源内容
   },
 }`}
@@ -530,7 +530,7 @@ print(response.text)# 输出工作流的响应`
                         <ul className="list-disc list-inside pl-4 mt-2 bisheng-label pb-2">
                             <li className='mt-2 leading-6'>如果用户在对话框内上传了文件</li>
                             <ul className="list-disc list-inside pl-4 mt-2 bisheng-label pb-2">
-                                <li className='mt-2 leading-6'>如果有文件类型，调用毕昇文件上传接口获取到文件url，示例如下：</li>
+                                <li className='mt-2 leading-6'>如果有文件类型，调用E-Agent文件上传接口获取到文件url，示例如下：</li>
                             </ul>
                         </ul>
                     </div>
@@ -661,7 +661,7 @@ def upload_file(local_path: str):
                         <p className="bisheng-label py-2">处理逻辑：</p>
                         <ul className="list-disc list-inside pl-4 mt-2 bisheng-label pb-2">
                             <li className='mt-2 leading-6'>解析<code className="bg-gray-200 p-1 rounded">input_schema.value</code> 中的表单元素，在前端渲染表单样式</li>
-                            <li className='mt-2 leading-6'>如果有文件类型，调用毕昇文件上传接口获取到文件url，示例如下：</li>
+                            <li className='mt-2 leading-6'>如果有文件类型，调用E-Agent文件上传接口获取到文件url，示例如下：</li>
                         </ul>
                     </div>
                     <SyntaxHighlighter
@@ -754,7 +754,7 @@ def upload_file(local_path: str):
                         <ul className="list-disc list-inside pl-4 mt-2 bisheng-label pb-2">
                             <li className='mt-2 leading-6'>将 <code className="bg-gray-200 p-1 rounded">output_schema.message</code> 展示给用户</li>
                             <li className='mt-2 leading-6'>如果 <code className="bg-gray-200 p-1 rounded">files</code> 不为空，则提供文件下载按钮或预览功能</li>
-                            <li className='mt-2 leading-6'><code className="bg-gray-200 p-1 rounded">source_url</code> 基于毕昇服务根路径，需要拼接毕昇访问地址才可访问</li>
+                            <li className='mt-2 leading-6'><code className="bg-gray-200 p-1 rounded">source_url</code> 基于E-Agent服务根路径，需要拼接E-Agent访问地址才可访问</li>
                         </ul>
                     </div>
 
