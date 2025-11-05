@@ -10,6 +10,9 @@ import {
   RTServer
 } from "./../../types/api/index";
 
+// 导入教育模块 API
+export { educationAPI } from "./education";
+
 export const paramsSerializer = (params) => {
   return Object.keys(params)
     .map(key => {

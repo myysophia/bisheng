@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/bs-ui/button";
@@ -28,11 +28,7 @@ export default function Deployment() {
         i18n.loadNamespaces('model');
     }, [i18n]);
 
-    useEffect(() => {
-        loadDeployments();
-    }, []);
-
-    const loadDeployments = async () => {
+    const loadDeployments = useCallback(async () => {
         setLoading(true);
         try {
             const response = await getDeploymentListApi();
@@ -54,7 +50,34 @@ export default function Deployment() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadDeployments();
+    }, [loadDeployments]);
+
+    const hasInProgress = useMemo(() => {
+        if (!Array.isArray(deployments) || deployments.length === 0) return false;
+        return deployments.some((item: any) => {
+            const status = (item?.status ?? "").toLowerCase();
+            if (status === "pending" || status === "paused") {
+                return true;
+            }
+            const desired = Number(item?.replicas ?? item?.desiredReplicas ?? item?.desired_replicas ?? 0);
+            const ready = Number(item?.readyReplicas ?? item?.ready_replicas ?? item?.running_replicas ?? 0);
+            return desired > 0 && ready < desired;
+        });
+    }, [deployments]);
+
+    useEffect(() => {
+        if (viewMode !== ViewMode.LIST || !hasInProgress) {
+            return;
+        }
+        const timer = setInterval(() => {
+            loadDeployments();
+        }, 5000);
+        return () => clearInterval(timer);
+    }, [viewMode, hasInProgress, loadDeployments]);
 
     const handleCreateDeployment = () => {
         setViewMode(ViewMode.CREATE);

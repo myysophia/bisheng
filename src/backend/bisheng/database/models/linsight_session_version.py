@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Dict, Optional
 
-from sqlalchemy import Column, Text, JSON, Boolean, Enum as SQLEnum, DateTime, text, ForeignKey, CHAR, func
+from sqlalchemy import Column, Text, JSON, Boolean, Enum as SQLEnum, DateTime, text, ForeignKey, String, func
 from sqlmodel import Field, select, col, update
 
 from bisheng.database.base import async_session_getter, uuid_hex
@@ -34,10 +34,9 @@ class LinsightSessionVersionBase(SQLModelSerializable):
     """
     灵思会话版本模型基类
     """
-    session_id: str = Field(..., description='会话ID', sa_column=Column(CHAR(36),
-                                                                        ForeignKey("message_session.chat_id"),
-                                                                        nullable=False,
-                                                                        index=True))
+    session_id: str = Field(..., description='会话ID', 
+                            sa_column=Column(String(255), ForeignKey("message_session.chat_id"), 
+                                           nullable=False, index=True))
     user_id: int = Field(..., description='用户ID', foreign_key="user.user_id", nullable=False)
     question: str = Field(..., description='用户问题', sa_type=Text, nullable=False)
     title: Optional[str] = Field(None, description='会话标题', sa_type=Text, nullable=True)
@@ -67,7 +66,7 @@ class LinsightSessionVersion(LinsightSessionVersionBase, table=True):
     灵思会话版本模型
     """
     id: str = Field(default_factory=uuid_hex, description='会话版本ID',
-                    sa_column=Column(CHAR(36), unique=True, nullable=False, primary_key=True))
+                    sa_column=Column(String(36), unique=True, nullable=False, primary_key=True))
 
     create_time: datetime = Field(default_factory=datetime.now, description='创建时间',
                                   sa_column=Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP')))

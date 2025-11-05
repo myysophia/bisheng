@@ -7,7 +7,7 @@ from bisheng.api.v1 import (assistant_router, audit_router, chat_router, compone
                             report_router, server_router, skillcenter_router, tag_router,
                             user_router, validate_router, variable_router, workflow_router,
                             workstation_router, linsight_router, tool_router, invite_code_router,
-                            deployment_router)
+                            deployment_router, education_router)
 from bisheng.api.v2 import (assistant_router_rpc, chat_router_rpc, flow_router,
                             knowledge_router_rpc, rpc_router_rpc, workflow_router_rpc,
                             workstation_router_rpc)
@@ -39,6 +39,12 @@ router.include_router(linsight_router)
 router.include_router(tool_router)
 router.include_router(invite_code_router)
 router.include_router(deployment_router)
+router.include_router(education_router)
+
+# 添加不带v1前缀的教育路由，用于兼容前端请求
+router_legacy = APIRouter(prefix='/api')
+router_legacy.include_router(education_router)
+
 router_rpc = APIRouter(prefix='/api/v2', )
 router_rpc.include_router(knowledge_router_rpc)
 router_rpc.include_router(chat_router_rpc)

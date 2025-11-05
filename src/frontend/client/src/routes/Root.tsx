@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { ContextType } from '~/common';
 import { Banner } from '~/components/Banners';
 import { MobileNav, Nav } from '~/components/Nav';
@@ -19,11 +19,28 @@ export default function Root() {
     return savedNavVisible !== null ? JSON.parse(savedNavVisible) : true;
   });
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const { isAuthenticated, logout } = useAuthContext();
   const assistantsMap = useAssistantsMap({ isAuthenticated });
   const agentsMap = useAgentsMap({ isAuthenticated });
   const fileMap = useFileMap({ isAuthenticated });
   const search = useSearch({ isAuthenticated });
+
+  useEffect(() => {
+    const pendingEducation = localStorage.getItem('pendingEducationRedirect');
+    if (!pendingEducation) {
+      return;
+    }
+
+    if (location.pathname === '/education' || location.pathname.endsWith('/education')) {
+      localStorage.removeItem('pendingEducationRedirect');
+      return;
+    }
+
+    navigate('/education', { replace: true });
+  }, [location.pathname, navigate]);
 
   if (!isAuthenticated) {
     return null;

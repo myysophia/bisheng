@@ -4,7 +4,9 @@ from typing import Optional, Dict, Any, List, Literal
 from loguru import logger
 from sqlalchemy import update
 from sqlalchemy.dialects.mysql import LONGTEXT
-from sqlmodel import Field, select, delete, col, or_, func, Column, Text, DateTime, text, CHAR, ForeignKey
+from sqlmodel import Field, select, delete, col, or_, func, Column, Text, DateTime, text, CHAR
+# 临时注释掉 ForeignKey 导入以避免外键约束问题
+# from sqlmodel import ForeignKey
 
 from bisheng.api.v1.schema.inspiration_schema import SOPManagementUpdateSchema
 from bisheng.database.base import async_session_getter, async_get_count
@@ -28,7 +30,6 @@ class LinsightSOPBase(SQLModelSerializable):
 
     linsight_session_id: Optional[str] = Field(default=None, description='灵思会话ID',
                                                sa_column=Column(CHAR(36),
-                                                                ForeignKey("message_session.chat_id"),
                                                                 nullable=True))
     create_time: datetime = Field(default_factory=datetime.now, description='创建时间',
                                   sa_column=Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP')))

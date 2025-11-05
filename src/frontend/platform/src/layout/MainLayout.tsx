@@ -1,6 +1,7 @@
 import {
     ApplicationIcon,
     BookOpenIcon,
+    EducationIcon,
     EnIcon,
     EvaluatingIcon,
     GithubIcon,
@@ -18,7 +19,7 @@ import { SelectHover, SelectHoverItem } from "@/components/bs-ui/select/hover";
 import { locationContext } from "@/contexts/locationContext";
 import i18next from "i18next";
 import { Activity, ChevronDown, ChevronLeft, ChevronRight, Globe, Lock, MoonStar, Sun } from "lucide-react";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -32,6 +33,21 @@ import { captureAndAlertRequestErrorHoc } from "../controllers/request";
 import { User } from "../types/api/user";
 import HeaderMenu from "./HeaderMenu";
 
+type MenuItem = {
+    key: string;
+    label: string;
+    icon: JSX.Element;
+    to?: string;
+    href?: string;
+    target?: string;
+};
+
+type MenuGroup = {
+    key: string;
+    title: string;
+    items: MenuItem[];
+};
+
 export default function MainLayout() {
     const { dark, setDark } = useContext(darkContext);
     const { appConfig } = useContext(locationContext)
@@ -42,7 +58,7 @@ export default function MainLayout() {
     const sidebarWidthClass = collapsed ? "w-[72px] min-w-[72px] px-2" : "w-[184px] min-w-[184px] px-3"
     const navBaseClass = "navlink inline-flex rounded-lg w-full hover:bg-nav-hover h-12 mb-[3.5px]"
     const navPaddingClass = collapsed ? "justify-center px-2" : "px-6"
-    const navTextClass = collapsed ? "hidden" : "mx-[14px] max-w-[48px] text-[14px] leading-[48px]"
+    const navTextClass = collapsed ? "hidden" : "mx-[14px] text-[14px] leading-[48px] whitespace-nowrap overflow-hidden text-ellipsis"
     const toggleSidebar = () => setCollapsed(prev => !prev)
     const toggleLabel = collapsed ? t('menu.expandSidebar') : t('menu.collapseSidebar')
 
@@ -52,7 +68,7 @@ export default function MainLayout() {
             desc: `${t('menu.logoutContent')}？`,
             okTxt: t('system.confirm'),
             onOk(next) {
-                captureAndAlertRequestErrorHoc(logoutApi()).then(_ => {
+                captureAndAlertRequestErrorHoc(logoutApi()).then(() => {
                     setUser(null)
                     localStorage.removeItem('isLogin')
                 })
@@ -73,15 +89,210 @@ export default function MainLayout() {
         return ['admin', 'group_admin'].includes(user.role)
     }, [user])
 
-    const isMenu = (menu) => {
+    const isMenu = useCallback((menu: string) => {
         return user.web_menu.includes(menu) || user.role === 'admin'
-    }
+    }, [user]);
+
+    const getInitialExpandedState = () => {
+        const defaults: Record<string, boolean> = {
+            workspace: true,
+            education: true,
+            square: true,
+            application: true,
+            model: true,
+            settings: true
+        };
+
+        if (typeof window === 'undefined') {
+            return defaults;
+        }
+
+        try {
+            const stored = localStorage.getItem('platform-sidebar-groups');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed && typeof parsed === 'object') {
+                    return { ...defaults, ...parsed };
+                }
+            }
+        } catch (error) {
+            // 忽略解析异常，采用默认展开状态
+        }
+
+        return defaults;
+    };
+
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => getInitialExpandedState());
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        localStorage.setItem('platform-sidebar-groups', JSON.stringify(expandedGroups));
+    }, [expandedGroups]);
+
+    const handleToggleGroup = (key: string) => {
+        setExpandedGroups(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
+
+    const menuGroups = useMemo<MenuGroup[]>(() => {
+        const groups: MenuGroup[] = [];
+
+        if (appConfig.benchMenu) {
+            groups.push({
+                key: 'workspace',
+                title: '工作台',
+                items: [
+                    {
+                        key: 'workspace-main',
+                        label: t('menu.workspace'),
+                        icon: <ApplicationIcon className="h-6 w-6 my-[12px]" />,
+                        href: '/workspace/',
+                        target: '_blank'
+                    }
+                ]
+            });
+        }
+
+        const teachingItems: MenuItem[] = [
+            {
+                key: 'education-home',
+                label: '智能体教学',
+                icon: <EducationIcon className="h-6 w-6 my-[12px]" />,
+                to: '/education'
+            }
+        ];
+
+        if (isMenu('knowledge')) {
+            teachingItems.push({
+                key: 'knowledge',
+                label: t('menu.knowledge'),
+                icon: <KnowledgeIcon className="h-6 w-6 my-[12px]" />,
+                to: '/filelib'
+            });
+        }
+
+        if (user.role === 'admin') {
+            teachingItems.push({
+                key: 'dataset',
+                label: t('menu.dataset'),
+                icon: <DatasetIcon className="h-6 w-6 my-[12px]" />,
+                to: '/dataset'
+            });
+        }
+
+        if (teachingItems.length) {
+            groups.push({
+                key: 'education',
+                title: '智能体教学',
+                items: teachingItems
+            });
+        }
+
+        groups.push({
+            key: 'square',
+            title: '智能体广场',
+            items: [
+                {
+                    key: 'square-home',
+                    label: '智能体广场',
+                    icon: <ApplicationIcon className="h-6 w-6 my-[12px]" />,
+                    to: '/square'
+                }
+            ]
+        });
+
+        const applicationItems: MenuItem[] = [];
+        if (isMenu('build')) {
+            applicationItems.push({
+                key: 'build',
+                label: '智能体构建',
+                icon: <TechnologyIcon className="h-6 w-6 my-[12px]" />,
+                to: '/build/apps'
+            });
+        }
+
+        if (applicationItems.length) {
+            groups.push({
+                key: 'application',
+                title: '智能体应用',
+                items: applicationItems
+            });
+        }
+
+        const modelItems: MenuItem[] = [];
+        if (isMenu('model')) {
+            modelItems.push({
+                key: 'model',
+                label: t('menu.models'),
+                icon: <ModelIcon className="h-6 w-6 my-[12px]" />,
+                to: '/model'
+            });
+        }
+        if (isMenu('evaluation')) {
+            modelItems.push({
+                key: 'evaluation',
+                label: t('menu.evaluation'),
+                icon: <EvaluatingIcon className="h-6 w-6 my-[12px]" />,
+                to: '/evaluation'
+            });
+        }
+        if (modelItems.length) {
+            groups.push({
+                key: 'model',
+                title: '大模型应用',
+                items: modelItems
+            });
+        }
+
+        const settingItems: MenuItem[] = [];
+        if (isAdmin) {
+            settingItems.push({
+                key: 'monitor',
+                label: t('menu.monitor'),
+                icon: <Activity className="h-6 w-6 my-[12px]" />,
+                to: '/monitor'
+            });
+        }
+        settingItems.push({
+            key: 'label',
+            label: t('menu.annotation'),
+            icon: <LabelIcon className="h-6 w-6 my-[12px]" />,
+            to: '/label'
+        });
+        if (isAdmin) {
+            settingItems.push({
+                key: 'log',
+                label: t('menu.log'),
+                icon: <LogIcon className="h-6 w-6 my-[12px]" />,
+                to: '/log'
+            });
+            settingItems.push({
+                key: 'system',
+                label: t('menu.system'),
+                icon: <SystemIcon className="h-6 w-6 my-[12px]" />,
+                to: '/sys'
+            });
+        }
+        if (settingItems.length) {
+            groups.push({
+                key: 'settings',
+                title: '设置',
+                items: settingItems
+            });
+        }
+
+        return groups;
+    }, [appConfig, isAdmin, isMenu, t, user.role]);
 
     return <div className="flex">
         <div className="bg-background-main w-full h-screen">
             <div className="flex justify-between h-[64px] bg-background-main relative z-[21]">
                 <div className="flex h-9 my-[14px]">
-                    <Link className="inline-block" to='/'>
+                    <Link className="inline-block" to='/education'>
                         {/* @ts-ignore */}
                         <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="w-[104px] ml-[38px] rounded dark:w-[104px]" alt="" />
                     </Link>
@@ -137,80 +348,58 @@ export default function MainLayout() {
             </div>
             <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
                 <div className={`relative z-10 bg-background-main h-full ${sidebarWidthClass} shadow-x1 flex flex-col`}>
-                    <nav className="flex-1 overflow-y-auto">
-                        {appConfig.benchMenu && (
-                            <a
-                                href="/workspace/"  // 直接使用根路径
-                                target="_blank"
-                                className={`${navBaseClass} ${navPaddingClass}`}
-                            >
-                                <ApplicationIcon className="h-6 w-6 my-[12px]" />
-                                <span className={navTextClass}>
-                                    {t('menu.workspace')}
-                                </span>
-                            </a>
-                        )}
-                        <NavLink to='/' className={`${navBaseClass} ${navPaddingClass}`}>
-                            <ApplicationIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.app')}</span>
-                        </NavLink>
-                        {
-                            isMenu('build') &&
-                            <NavLink to='/build' className={`${navBaseClass} ${navPaddingClass}`} >
-                                <TechnologyIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.skills')}</span>
-                            </NavLink>
-                        }
-                        {
-                            isMenu('knowledge') &&
-                            <NavLink to='/filelib' className={`${navBaseClass} ${navPaddingClass}`}>
-                                <KnowledgeIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.knowledge')}</span>
-                            </NavLink>
-                        }
-                        {
-                            user.role === 'admin' && <>
-                                <NavLink to='/dataset' className={`${navBaseClass} ${navPaddingClass}`}>
-                                    <DatasetIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.dataset')}</span>
-                                </NavLink>
-                            </>
-                        }
-                        {
-                            isMenu('model') &&
-                            <NavLink to='/model' className={`${navBaseClass} ${navPaddingClass}`}>
-                                <ModelIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.models')}</span>
-                            </NavLink>
-                        }
-                        {
-                            isAdmin && (
-                                <NavLink to='/monitor' className={`${navBaseClass} ${navPaddingClass}`}>
-                                    <Activity className="h-6 w-6 my-[12px]" />
-                                    <span className={navTextClass}>{t('menu.monitor')}</span>
-                                </NavLink>
-                            )
-                        }
-                        {
-                            isMenu('evaluation') &&
-                            <NavLink to='/evaluation' className={`${navBaseClass} ${navPaddingClass}`}>
-                                <EvaluatingIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.evaluation')}</span>
-                            </NavLink>
-                        }
-                        {
-                            <NavLink to='/label' className={`${navBaseClass} ${navPaddingClass}`}>
-                                <LabelIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.annotation')}</span>
-                            </NavLink>
-                        }
-                        {
-                            isAdmin && <>
-                                <NavLink to='/log' className={`${navBaseClass} ${navPaddingClass}`}>
-                                    <LogIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.log')}</span>
-                                </NavLink>
-                            </>
-                        }
-                        {
-                            isAdmin && <>
-                                <NavLink to='/sys' className={`${navBaseClass} ${navPaddingClass}`}>
-                                    <SystemIcon className="h-6 w-6 my-[12px]" /><span className={navTextClass}>{t('menu.system')}</span>
-                                </NavLink>
-                            </>
-                        }
+                    <nav className="flex-1 overflow-y-auto py-2">
+                        {menuGroups.map(group => {
+                            const isExpanded = collapsed ? true : expandedGroups[group.key] ?? true;
+                            return (
+                                <div className="mb-4" key={group.key}>
+                                    {!collapsed ? (
+                                        <button
+                                            type="button"
+                                            className="flex items-center w-full px-3 mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            onClick={() => handleToggleGroup(group.key)}
+                                        >
+                                            <span className="flex-1 text-left truncate">{group.title}</span>
+                                            <ChevronDown className={`w-4 h-4 ml-2 shrink-0 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                        </button>
+                                    ) : (
+                                        <div className="w-full h-px bg-gray-200 dark:bg-gray-700 mb-2"></div>
+                                    )}
+                                    {isExpanded && (
+                                        <div className="mt-1 space-y-1">
+                                            {group.items.map(item => {
+                                                const content = (
+                                                    <>
+                                                        {item.icon}
+                                                        <span className={navTextClass}>{item.label}</span>
+                                                    </>
+                                                );
+
+                                                if (item.href) {
+                                                    return (
+                                                        <a
+                                                            key={item.key}
+                                                            href={item.href}
+                                                            target={item.target}
+                                                            rel={item.target === '_blank' ? "noopener noreferrer" : undefined}
+                                                            className={`${navBaseClass} ${navPaddingClass}`}
+                                                        >
+                                                            {content}
+                                                        </a>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <NavLink key={item.key} to={item.to!} className={`${navBaseClass} ${navPaddingClass}`}>
+                                                        {content}
+                                                    </NavLink>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </nav>
                     <div className="pb-4 flex flex-col items-center gap-3">
                         <TooltipProvider>

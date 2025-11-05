@@ -12,6 +12,7 @@ from fastapi_jwt_auth2.exceptions import AuthJWTException
 from loguru import logger
 
 from bisheng.api import router, router_rpc
+from bisheng.api.router import router_legacy
 from bisheng.core.app_context import init_app_context
 from bisheng.database.init_data import init_default_data
 from bisheng.interface.utils import setup_llm_caching
@@ -97,6 +98,7 @@ def create_app():
 
     app.include_router(router)
     app.include_router(router_rpc)
+    app.include_router(router_legacy)  # 添加legacy路由支持
     return app
 
 

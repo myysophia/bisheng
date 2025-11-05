@@ -33,15 +33,59 @@ const AuthContextProvider = ({
   children: ReactNode;
 }) => {
   const [user, setUser] = useRecoilState(store.user);
-  const [token, setToken] = useState<string | undefined>(undefined);
+  const [token, setToken] = useState<string | undefined>(() => {
+    // 初始化时检查localStorage中的token
+    return localStorage.getItem('token') || localStorage.getItem('ws_token') || undefined;
+  });
   const [error, setError] = useState<string | undefined>(undefined);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    // 初始化时检查是否有token和用户信息
+    const storedToken = localStorage.getItem('token') || localStorage.getItem('ws_token');
+    const storedUser = localStorage.getItem('user');
+    return !!(storedToken && storedUser);
+  });
   const { data: userRole = null } = useGetRole(SystemRoles.USER, {
     enabled: !!(isAuthenticated && (user?.role ?? '')),
   });
   const { data: adminRole = null } = useGetRole(SystemRoles.ADMIN, {
     enabled: !!(isAuthenticated && user?.role === SystemRoles.ADMIN),
   });
+  // 初始化时从localStorage恢复用户状态
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token') || localStorage.getItem('ws_token');
+    const storedUser = localStorage.getItem('user');
+    
+    console.log('🔧 AuthContext: 初始化检查', { 
+      storedToken: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
+      storedUser: storedUser ? 'exists' : 'null',
+      currentUser: user ? user.user_name : 'null',
+      isAuthenticated 
+    });
+    
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('🔧 AuthContext: 恢复用户状态', { user: parsedUser });
+        
+        // 无论当前user状态如何，都重新设置
+        setUser(parsedUser);
+        setToken(storedToken);
+        setTokenHeader(storedToken);
+        setIsAuthenticated(true);
+        
+        console.log('✅ AuthContext: 认证状态已设置');
+      } catch (error) {
+        console.error('❌ 解析用户信息失败:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('ws_token');
+        setIsAuthenticated(false);
+      }
+    } else {
+      console.log('⚠️ AuthContext: 缺少认证数据', { hasToken: !!storedToken, hasUser: !!storedUser });
+    }
+  }, []);
+
   useEffect(() => {
     setUserContext({ token, isAuthenticated: !!user, user });
   }, [user])
@@ -151,6 +195,16 @@ const AuthContextProvider = ({
     if (userQuery.data) {
       setUser(userQuery.data);
     } else if (userQuery.isError) {
+      // 检查是否是开发环境或教育演示模式
+      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
+      const isDev = import.meta.env.DEV;
+      
+      if (isEducationDemo || isDev) {
+        console.log('🔧 AuthContext: 开发/演示模式，跳过用户查询错误处理');
+        // 在开发环境或教育演示模式下，不跳转到登录页面
+        return;
+      }
+      
       doSetError((userQuery.error as Error).message);
       navigate(`/${__APP_ENV__.BISHENG_HOST}/login`, { replace: true });
     }

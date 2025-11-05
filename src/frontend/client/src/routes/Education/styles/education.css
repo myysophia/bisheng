@@ -1,0 +1,272 @@
+/* 智能体教学模块样式 */
+
+/* 视频播放器样式 */
+.video-player-container {
+  position: relative;
+}
+
+.video-player-container .slider {
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  cursor: pointer;
+}
+
+.video-player-container .slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 2px solid #3b82f6;
+}
+
+.video-player-container .slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 2px solid #3b82f6;
+}
+
+/* 工作流画布样式 */
+.practice-environment .workflow-canvas {
+  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.practice-environment .workflow-node {
+  transition: all 0.2s ease;
+  cursor: move;
+}
+
+.practice-environment .workflow-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.practice-environment .workflow-node.selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* 进度条动画 */
+.progress-bar {
+  transition: width 0.3s ease;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 成就解锁动画 */
+.achievement-unlock {
+  animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 课程卡片悬停效果 */
+.course-card {
+  transition: all 0.3s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 学习路径卡片 */
+.learning-path-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.learning-path-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.learning-path-card:hover::before {
+  left: 100%;
+}
+
+/* 数字人聊天气泡 */
+.chat-bubble {
+  position: relative;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-bubble.user {
+  margin-left: auto;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.chat-bubble.assistant {
+  margin-right: auto;
+  background: #f3f4f6;
+}
+
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+}
+
+.chat-bubble.user::after {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: #1d4ed8;
+}
+
+.chat-bubble.assistant::after {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: #f3f4f6;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .education-center {
+    padding: 1rem;
+  }
+  
+  .course-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .video-player-container .chat-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+  
+  .practice-environment .workflow-canvas {
+    touch-action: pan-x pan-y;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .education-layout {
+    background: linear-gradient(to bottom, #1f2937, #111827);
+  }
+  
+  .course-card {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .chat-bubble.assistant {
+    background: #374151;
+    color: #f9fafb;
+  }
+  
+  .chat-bubble.assistant::after {
+    border-right-color: #374151;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .video-player-container,
+  .practice-environment,
+  .navigation-buttons {
+    display: none;
+  }
+  
+  .course-content {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .course-card {
+    border: 2px solid;
+  }
+  
+  .progress-bar {
+    border: 1px solid;
+  }
+  
+  .workflow-node {
+    border: 2px solid;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .shimmer,
+  .bounceIn {
+    animation: none;
+  }
+}
+
+
+
+
+

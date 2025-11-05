@@ -6,9 +6,25 @@ import type * as t from './types';
 
 
 const customAxios = axios.create({
-  baseURL: import.meta.env.BASE_URL
-  // 配置
+  baseURL: import.meta.env.BASE_URL,
+  withCredentials: true
 });
+
+// 添加请求拦截器，确保每个请求都有Authorization头
+customAxios.interceptors.request.use(
+  (config) => {
+    // 确保每个请求都有token
+    const token = localStorage.getItem('token') || localStorage.getItem('ws_token');
+    if (token && !config.headers['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Data-provider request interceptor: Added Authorization header');
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 async function _get<T>(url: string, options?: AxiosRequestConfig): Promise<T> {
   const response = await customAxios.get(url, { ...options });
@@ -108,7 +124,9 @@ customAxios.interceptors.response.use(
       console.warn('401 error, refreshing token');
       originalRequest._retry = true;
 
-      if (import.meta.env.MODE === 'production') {
+      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
+
+      if (import.meta.env.MODE === 'production' && !isEducationDemo) {
         location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`
       }
       // } else {

@@ -3,9 +3,61 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
 
 const customAxios = axios.create({
-  baseURL: import.meta.env.BASE_URL
-  // 配置
+  baseURL: import.meta.env.BASE_URL,
+  withCredentials: true
 });
+
+// 设置 token 到请求头
+const setTokenHeader = (token: string) => {
+  if (token) {
+    customAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete customAxios.defaults.headers.common['Authorization'];
+  }
+};
+
+// 初始化时设置 token
+const initToken = () => {
+  // 优先使用平台前端的token
+  const wsToken = localStorage.getItem('ws_token');
+  const token = localStorage.getItem('token');
+  
+  const finalToken = wsToken || token;
+  if (finalToken) {
+    setTokenHeader(finalToken);
+    // 同步token到两个key，确保兼容性
+    if (wsToken && !token) {
+      localStorage.setItem('token', wsToken);
+    } else if (token && !wsToken) {
+      localStorage.setItem('ws_token', token);
+    }
+  }
+};
+
+// 监听 token 更新事件
+if (typeof window !== 'undefined') {
+  window.addEventListener('tokenUpdated', (event: CustomEvent) => {
+    setTokenHeader(event.detail);
+  });
+  
+  // 初始化 token
+  initToken();
+  
+  // 开发环境下，强制设置测试token
+  if (import.meta.env.DEV) {
+    const testToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ7XCJ1c2VyX25hbWVcIjogXCJ0ZXN0QDEyMy5jb21cIiwgXCJ1c2VyX2lkXCI6IDEsIFwicm9sZVwiOiBcImFkbWluXCJ9IiwiaWF0IjoxNzYyMTU2OTY5LCJuYmYiOjE3NjIxNTY5NjksImp0aSI6ImIxZWQ2YmU1LTA2MWYtNDM4YS1iYTYyLWVkZGJhZGRjZjA3ZiIsImV4cCI6MTc2MjI0MzM2OSwidHlwZSI6ImFjY2VzcyIsImZyZXNoIjpmYWxzZX0.uhK_bJ6lQHym38xkP7n_l2H1rxGsTPPUM6ErjMzHbP8';
+    
+    console.log('开发环境：强制设置测试token');
+    localStorage.setItem('ws_token', testToken);
+    localStorage.setItem('token', testToken);
+    localStorage.setItem('educationDemoMode', 'true');
+    setTokenHeader(testToken);
+    
+    // 立即设置到axios默认头部
+    customAxios.defaults.headers.common['Authorization'] = `Bearer ${testToken}`;
+    console.log('Token已设置到axios默认头部');
+  }
+}
 
 async function _get<T>(url: string, options?: AxiosRequestConfig): Promise<T> {
   const response = await customAxios.get(url, { ...options });
@@ -87,6 +139,22 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
   failedQueue = [];
 };
 
+// 添加请求拦截器，确保每个请求都有Authorization头
+customAxios.interceptors.request.use(
+  (config) => {
+    // 确保每个请求都有token
+    const token = localStorage.getItem('token') || localStorage.getItem('ws_token');
+    if (token && !config.headers['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Request interceptor: Added Authorization header');
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 customAxios.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -106,7 +174,9 @@ customAxios.interceptors.response.use(
       console.warn('401 error, refreshing token');
       originalRequest._retry = true;
 
-      if (import.meta.env.MODE === 'production') {
+      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
+
+      if (import.meta.env.MODE === 'production' && !isEducationDemo) {
         location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`
       }
       // } else {

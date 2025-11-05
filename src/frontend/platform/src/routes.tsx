@@ -38,6 +38,7 @@ import Page403 from "./pages/Page403";
 import Report from "./pages/Report";
 import SystemPage from "./pages/SystemPage";
 import ResoucePage from "./pages/resoucePage";
+import EducationPage from "./pages/EducationPage";
 import { AppNumType } from "./types/app";
 
 // react 与 react router dom版本不匹配
@@ -57,9 +58,28 @@ const ErrorHoc = ({ Comp }) => {
   );
 }
 
+const detectBasename = () => {
+  // 优先使用构建时注入的 BASE_URL
+  if (__APP_ENV__.BASE_URL) {
+    return __APP_ENV__.BASE_URL
+  }
+
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const { pathname } = window.location
+  // 兼容部署在 /workspace 前缀下的场景
+  if (pathname === '/workspace' || pathname.startsWith('/workspace/')) {
+    return '/workspace'
+  }
+
+  return ''
+}
+
 const baseConfig = {
   //@ts-ignore
-  basename: __APP_ENV__.BASE_URL
+  basename: detectBasename()
 }
 
 
@@ -68,7 +88,8 @@ const privateRouter = [
     path: "/",
     element: <MainLayout />,
     children: [
-      { path: "", element: <SkillChatPage />, },
+      { path: "", element: <Navigate to="education" replace /> },
+      { path: "square", element: <SkillChatPage /> },
       { path: "filelib", element: <KnowledgePage />, permission: 'knowledge', },
       { path: "filelib/:id", element: <FilesPage />, permission: 'knowledge', },
       { path: "filelib/upload/:id", element: <FilesUpload />, permission: 'knowledge', },
@@ -94,6 +115,7 @@ const privateRouter = [
       { path: "evaluation", element: <EvaluatingPage /> },
       { path: "evaluation/create", element: <EvaluatingCreate /> },
       { path: "dataset", element: <DataSetPage /> },
+      { path: "education", element: <EducationPage /> },
       { path: "label", element: <LabelPage /> },
       { path: "label/:id", element: <TaskApps /> },
       { path: "label/chat/:id/:fid/:cid/:type", element: <TaskAppChats /> },
