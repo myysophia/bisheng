@@ -55,10 +55,10 @@ export default function MainLayout() {
     const { user, setUser } = useContext(userContext);
     const { language, options, changLanguage, t } = useLanguage(user)
     const [collapsed, setCollapsed] = useState(false)
-    const sidebarWidthClass = collapsed ? "w-[72px] min-w-[72px] px-2" : "w-[184px] min-w-[184px] px-3"
-    const navBaseClass = "navlink inline-flex rounded-lg w-full hover:bg-nav-hover h-12 mb-[3.5px]"
-    const navPaddingClass = collapsed ? "justify-center px-2" : "px-6"
-    const navTextClass = collapsed ? "hidden" : "mx-[14px] text-[14px] leading-[48px] whitespace-nowrap overflow-hidden text-ellipsis"
+    const sidebarWidthClass = collapsed ? "w-[72px] min-w-[72px] px-2" : "w-[200px] min-w-[200px] px-3"
+    const navBaseClass = "navlink inline-flex items-center rounded-lg w-full hover:bg-nav-hover h-10 mb-1"
+    const navPaddingClass = collapsed ? "justify-center px-2" : "px-3"
+    const navTextClass = collapsed ? "hidden" : "ml-3 text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]"
     const toggleSidebar = () => setCollapsed(prev => !prev)
     const toggleLabel = collapsed ? t('menu.expandSidebar') : t('menu.collapseSidebar')
 
@@ -149,7 +149,7 @@ export default function MainLayout() {
                     {
                         key: 'workspace-main',
                         label: t('menu.workspace'),
-                        icon: <ApplicationIcon className="h-6 w-6 my-[12px]" />,
+                        icon: <ApplicationIcon className="h-5 w-5" />,
                         href: '/workspace/',
                         target: '_blank'
                     }
@@ -161,7 +161,7 @@ export default function MainLayout() {
             {
                 key: 'education-home',
                 label: '智能体教学',
-                icon: <EducationIcon className="h-6 w-6 my-[12px]" />,
+                icon: <EducationIcon className="h-5 w-5" />,
                 to: '/education'
             }
         ];
@@ -170,7 +170,7 @@ export default function MainLayout() {
             teachingItems.push({
                 key: 'knowledge',
                 label: t('menu.knowledge'),
-                icon: <KnowledgeIcon className="h-6 w-6 my-[12px]" />,
+                icon: <KnowledgeIcon className="h-5 w-5" />,
                 to: '/filelib'
             });
         }
@@ -179,7 +179,7 @@ export default function MainLayout() {
             teachingItems.push({
                 key: 'dataset',
                 label: t('menu.dataset'),
-                icon: <DatasetIcon className="h-6 w-6 my-[12px]" />,
+                icon: <DatasetIcon className="h-5 w-5" />,
                 to: '/dataset'
             });
         }
@@ -199,7 +199,7 @@ export default function MainLayout() {
                 {
                     key: 'square-home',
                     label: '智能体广场',
-                    icon: <ApplicationIcon className="h-6 w-6 my-[12px]" />,
+                    icon: <ApplicationIcon className="h-5 w-5" />,
                     to: '/square'
                 }
             ]
@@ -210,8 +210,8 @@ export default function MainLayout() {
             applicationItems.push({
                 key: 'build',
                 label: '智能体构建',
-                icon: <TechnologyIcon className="h-6 w-6 my-[12px]" />,
-                to: '/build/apps'
+                icon: <TechnologyIcon className="h-5 w-5" />,
+                to: '/build'
             });
         }
 
@@ -228,7 +228,7 @@ export default function MainLayout() {
             modelItems.push({
                 key: 'model',
                 label: t('menu.models'),
-                icon: <ModelIcon className="h-6 w-6 my-[12px]" />,
+                icon: <ModelIcon className="h-5 w-5" />,
                 to: '/model'
             });
         }
@@ -236,7 +236,7 @@ export default function MainLayout() {
             modelItems.push({
                 key: 'evaluation',
                 label: t('menu.evaluation'),
-                icon: <EvaluatingIcon className="h-6 w-6 my-[12px]" />,
+                icon: <EvaluatingIcon className="h-5 w-5" />,
                 to: '/evaluation'
             });
         }
@@ -253,27 +253,27 @@ export default function MainLayout() {
             settingItems.push({
                 key: 'monitor',
                 label: t('menu.monitor'),
-                icon: <Activity className="h-6 w-6 my-[12px]" />,
+                icon: <Activity className="h-5 w-5" />,
                 to: '/monitor'
             });
         }
         settingItems.push({
             key: 'label',
             label: t('menu.annotation'),
-            icon: <LabelIcon className="h-6 w-6 my-[12px]" />,
+            icon: <LabelIcon className="h-5 w-5" />,
             to: '/label'
         });
         if (isAdmin) {
             settingItems.push({
                 key: 'log',
                 label: t('menu.log'),
-                icon: <LogIcon className="h-6 w-6 my-[12px]" />,
+                icon: <LogIcon className="h-5 w-5" />,
                 to: '/log'
             });
             settingItems.push({
                 key: 'system',
                 label: t('menu.system'),
-                icon: <SystemIcon className="h-6 w-6 my-[12px]" />,
+                icon: <SystemIcon className="h-5 w-5" />,
                 to: '/sys'
             });
         }
@@ -356,22 +356,23 @@ export default function MainLayout() {
                                     {!collapsed ? (
                                         <button
                                             type="button"
-                                            className="flex items-center w-full px-3 mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            className="flex items-center w-full px-3 py-2 mb-1 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                                             onClick={() => handleToggleGroup(group.key)}
                                         >
                                             <span className="flex-1 text-left truncate">{group.title}</span>
-                                            <ChevronDown className={`w-4 h-4 ml-2 shrink-0 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                            <ChevronDown className={`w-3 h-3 ml-2 shrink-0 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                                         </button>
                                     ) : (
                                         <div className="w-full h-px bg-gray-200 dark:bg-gray-700 mb-2"></div>
                                     )}
                                     {isExpanded && (
-                                        <div className="mt-1 space-y-1">
+                                        <div className="space-y-0.5">
                                             {group.items.map(item => {
+                                                const iconElement = collapsed ? item.icon : <div className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</div>;
                                                 const content = (
                                                     <>
-                                                        {item.icon}
-                                                        <span className={navTextClass}>{item.label}</span>
+                                                        {iconElement}
+                                                        <span className={navTextClass} title={item.label}>{item.label}</span>
                                                     </>
                                                 );
 
