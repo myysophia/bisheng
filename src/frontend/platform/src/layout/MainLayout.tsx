@@ -444,7 +444,7 @@ export default function MainLayout() {
                         )}
                     </div>
                 </div>
-                <div className="flex-1 bg-background-main-content rounded-lg min-w-0">
+                <div className="flex-1 bg-background-main-content rounded-lg min-w-0 overflow-y-auto">
                     <ErrorBoundary
                         onReset={() => window.location.href = window.location.href}
                         FallbackComponent={CrashErrorComponent}
