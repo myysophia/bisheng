@@ -1,4 +1,5 @@
-FROM dataelement/bisheng-backend:base.v3
+ARG BASE_IMAGE=dataelement/bisheng-backend:base.v3
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
