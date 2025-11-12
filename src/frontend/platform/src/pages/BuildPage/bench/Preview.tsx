@@ -1,12 +1,12 @@
 import { Button } from "@/components/bs-ui/button";
 import { Dialog, DialogContent } from "@/components/bs-ui/dialog";
+import { resolveWorkspaceUrl } from "@/util/workspace";
 import { useState } from "react";
-
 
 export default function Preview({ onBeforView }) {
 
     const [open, setOpen] = useState(false)
-    const benchUrl = location.origin + '/workspace/'
+    const benchUrl = resolveWorkspaceUrl()
 
     const handleClick = async () => {
         const res = await onBeforView()

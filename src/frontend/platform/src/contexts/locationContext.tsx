@@ -49,7 +49,7 @@ const initialValue = {
   setExtraNavigation: () => { },
   extraComponent: <></>,
   setExtraComponent: () => { },
-  appConfig: { libAccepts: [] },
+  appConfig: { libAccepts: [], workspaceUrl: undefined },
   reloadConfig: () => { }
 };
 
@@ -66,6 +66,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [appConfig, setAppConfig] = useState<any>({
     libAccepts: [],
     noFace: true,
+    workspaceUrl: undefined,
   })
 
   const loadConfig = () => {
@@ -84,7 +85,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           noFace: !res.show_github_and_help,
           register: !!res.enable_registration,
           uploadFileMaxSize: res.uploaded_files_maximum_size || 200,
-          enableEtl4lm: res.enable_etl4lm
+          enableEtl4lm: res.enable_etl4lm,
+          workspaceUrl: res.workspace_url || res.workbench_url || undefined,
         });
 
         // backend version
@@ -100,7 +102,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
             // Only update the benchMenu property
             setAppConfig(prev => ({
               ...prev,
-              benchMenu: bench?.menuShow || false
+              benchMenu: bench?.menuShow || false,
+              workspaceUrl: bench?.workspaceUrl
+                || bench?.workspace_url
+                || bench?.benchUrl
+                || bench?.bench_url
+                || prev.workspaceUrl,
             }));
           })
           .catch(error => {

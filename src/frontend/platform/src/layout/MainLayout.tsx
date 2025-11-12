@@ -17,6 +17,7 @@ import { DatasetIcon } from "@/components/bs-icons/menu/dataset";
 import { bsConfirm } from "@/components/bs-ui/alertDialog/useConfirm";
 import { SelectHover, SelectHoverItem } from "@/components/bs-ui/select/hover";
 import { locationContext } from "@/contexts/locationContext";
+import { resolveWorkspaceUrl } from "@/util/workspace";
 import i18next from "i18next";
 import { Activity, ChevronDown, ChevronLeft, ChevronRight, Globe, Lock, MoonStar, Sun } from "lucide-react";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -123,6 +124,7 @@ export default function MainLayout() {
     };
 
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => getInitialExpandedState());
+    const workspaceLink = useMemo(() => resolveWorkspaceUrl(appConfig.workspaceUrl), [appConfig.workspaceUrl]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -150,7 +152,7 @@ export default function MainLayout() {
                         key: 'workspace-main',
                         label: t('menu.workspace'),
                         icon: <ApplicationIcon className="h-5 w-5" />,
-                        href: '/workspace/',
+                        href: workspaceLink,
                         target: '_blank'
                     }
                 ]

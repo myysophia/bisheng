@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { BookOpen, Clock, Users, Star, TrendingUp, Award, Play, Target, BarChart3, Trophy } from 'lucide-react';
 import { Button } from '@/components/bs-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/bs-ui/card';
 import { useTranslation } from 'react-i18next';
 import { educationAPI } from '@/controllers/API/education';
 import { captureAndAlertRequestErrorHoc } from '@/controllers/request';
+import { locationContext } from '@/contexts/locationContext';
+import { resolveWorkspaceUrl, buildWorkspaceLink } from '@/util/workspace';
 
 // 课程数据接口定义
 interface Course {
@@ -67,23 +69,6 @@ const achievements = [
   { id: 'practice-master', title: '实践大师', description: '完成所有实战项目', icon: '🏆' },
 ];
 
-const resolveBasePath = () => {
-  if (__APP_ENV__.BASE_URL) {
-    return __APP_ENV__.BASE_URL;
-  }
-
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
-  const { pathname } = window.location;
-  if (pathname === '/workspace' || pathname.startsWith('/workspace/')) {
-    return '/workspace';
-  }
-
-  return '';
-};
-
 export default function EducationPage() {
   const { t } = useTranslation();
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
@@ -96,12 +81,17 @@ export default function EducationPage() {
     average_rating: 0,
     total_duration: 0
   });
+  const { appConfig } = useContext(locationContext);
 
-  const basePath = useMemo(resolveBasePath, []);
-  const openClientPage = (relativePath: string) => {
+  const workspaceBase = useMemo(() => resolveWorkspaceUrl(appConfig.workspaceUrl), [appConfig.workspaceUrl]);
+  const openClientPage = (relativePath: string, target: '_self' | '_blank' = '_self') => {
     if (typeof window === 'undefined') return;
-    const target = `${window.location.origin}${basePath}${relativePath}`;
-    window.location.href = target;
+    const url = buildWorkspaceLink(workspaceBase, relativePath);
+    if (target === '_self') {
+      window.location.href = url;
+    } else {
+      window.open(url, target, 'noopener');
+    }
   };
 
   // 加载课程数据
@@ -154,12 +144,10 @@ export default function EducationPage() {
   const filteredCourses = courses;
 
   const handleCourseClick = (courseId: string) => {
-    // 跳转到客户端的教学界面 - 在当前标签页中打开
     openClientPage(`/education/courses/${courseId}`);
   };
 
   const handleStartLearning = () => {
-    // 跳转到客户端的教学界面 - 在当前标签页中打开
     openClientPage('/education');
   };
 
