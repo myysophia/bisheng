@@ -32,6 +32,7 @@ const ToolItem = ({ temp, index, dropdown, onDragStart, onClick }) => {
                         <TooltipTrigger className="block w-full">
                             <div key={el.name}
                                 className={`flex gap-2 items-center p-2 cursor-pointer border border-transparent rounded-md hover:border-gray-200`}
+                                data-node-type={el.type}
                                 onMouseEnter={(event) => {
                                     if (!event.currentTarget.classList.contains('border-gray-200')) {
                                         event.currentTarget.classList.add('bg-muted');
@@ -150,7 +151,7 @@ export default function Sidebar({ dropdown = false, disabledNodes = [], onInitSt
         event.dataTransfer.setData("flownodedata", JSON.stringify(data));
     }
 
-    return <div className={`${dropdown ? 'relative' : 'absolute'} max-w-56 z-40 h-full transition-transform ${expand ? 'p-2' : 'py-2 translate-x-[-200px]'}`}>
+    return <div className={`${dropdown ? 'relative' : 'absolute'} max-w-56 z-40 h-full transition-transform ${expand ? 'p-2' : 'py-2 translate-x-[-200px]'} flow-sidebar`}>
         <div className="bg-background rounded-2xl shadow-md h-full p-2">
             {/* tab */}
             <Tabs defaultValue="base" className="h-full" onValueChange={handleLoadTools}>
@@ -172,6 +173,7 @@ export default function Sidebar({ dropdown = false, disabledNodes = [], onInitSt
                                     <TooltipTrigger className="block w-full">
                                         <div key={item.type}
                                             className={`flex gap-2 items-center p-2 cursor-pointer border border-transparent rounded-md hover:border-gray-200 dark:hover:border-gray-800`}
+                                            data-node-type={item.type}
                                             onMouseEnter={(event) => {
                                                 // 如果正在拖拽，不移除hover样式
                                                 if (!event.currentTarget.classList.contains('border-gray-200')) {

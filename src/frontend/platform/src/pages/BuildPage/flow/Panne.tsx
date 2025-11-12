@@ -16,6 +16,9 @@ import Header from "./Header";
 import NoteNode from "./NoteNode";
 import Sidebar from "./Sidebar";
 import useFlowStore from "./flowStore";
+import { GuidedTourOverlay } from "@/components/GuidedTour/GuidedTourOverlay";
+import { useGuidedTour } from "@/components/GuidedTour/useGuidedTour";
+import { workflowGuidedSteps } from "@/components/GuidedTour/workflowSteps";
 
 // 自定义组件
 const nodeTypes = { flowNode: FlowNode, noteNode: NoteNode };
@@ -25,6 +28,10 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
     // 导入自适应布局
     const fitView = useFlowStore(state => state.fitView)
     const [flowKey, setFlowKey] = useState(1)
+    
+    // 引导系统
+    const guidedTour = useGuidedTour(workflowGuidedSteps);
+    
     useEffect(() => {
         if (reactFlowInstance) {
             setTimeout(() => {
@@ -47,6 +54,12 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
         setNodes, onNodesChange, onSelectionChange, onEdgesChange,
         onEdgeSelect, onConnect, onDragOver, onDrop, setEdges, setViewport, createNote
     } = useFlow(reactFlowInstance, flow, takeSnapshot)
+
+    // 监听节点和边的变化，更新引导进度
+    useEffect(() => {
+        guidedTour.updateProgress('nodesCreated', nodes.length);
+        guidedTour.updateProgress('connectionsCreated', edges.length);
+    }, [nodes.length, edges.length, guidedTour.updateProgress]);
 
     /**
      * 监听节点变化，更新flow数据
@@ -109,6 +122,7 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
                 const { nodes } = reactFlowInstance.toObject()
                 setNodes(nodes)
             }}
+            onStartGuidedTour={guidedTour.startTour}
         ></Header>
         <div className={`flex-1 min-h-0 overflow-hidden ${showApiPage ? 'hidden' : ''} relative`}>
             <Sidebar onInitStartNode={node => {
@@ -136,6 +150,7 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
                             onEdgesChange={onEdgesChange} // rebuild?
                             onConnect={onConnect}
                             nodeTypes={nodeTypes}
+                            className="react-flow"
                             onPaneClick={() => {
                                 setDropdownOpenEdgeId(null);
                                 window.dispatchEvent(new CustomEvent("closeHandleMenu"));
@@ -189,6 +204,17 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
         <div className={`flex flex-1 min-h-0 overflow-hidden ${showApiPage ? '' : 'hidden'}`}>
             <ApiMainPage type={'flow'} />
         </div>
+
+        {/* 引导覆盖层 */}
+        <GuidedTourOverlay
+            steps={workflowGuidedSteps}
+            isActive={guidedTour.state.isActive}
+            currentStep={guidedTour.state.currentStep}
+            onNext={guidedTour.nextStep}
+            onPrev={guidedTour.prevStep}
+            onSkip={guidedTour.skipTour}
+            onComplete={guidedTour.completeTour}
+        />
     </div>
 };
 

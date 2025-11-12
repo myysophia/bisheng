@@ -28,7 +28,7 @@ import { ChatTest } from "./FlowChat/ChatTest";
 import useFlowStore from "./flowStore";
 import Notification from "./Notification";
 
-const Header = ({ flow, nodes, onTabChange, preFlow, onPreFlowChange, onImportFlow }) => {
+const Header = ({ flow, nodes, onTabChange, preFlow, onPreFlowChange, onImportFlow, onStartGuidedTour }) => {
     const { message } = useToast()
     const { dark } = useContext(darkContext);
     const testRef = useRef(null)
@@ -304,15 +304,37 @@ const Header = ({ flow, nodes, onTabChange, preFlow, onPreFlowChange, onImportFl
             {/* Right Section with Options */}
             <div className="flex items-center gap-3">
                 <Notification />
-                <Button variant="outline" size="sm" className={`${!dark && 'bg-[#fff]'} h-8`} onClick={handleRunClick}>
+                {/* 引导模式按钮 */}
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`${!dark && 'bg-[#fff]'} h-8 text-blue-600 border-blue-200 hover:bg-blue-50`}
+                    onClick={onStartGuidedTour}
+                    title="开启引导模式，学习如何创建工作流"
+                >
+                    🎓 引导模式
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`${!dark && 'bg-[#fff]'} h-8`} 
+                    onClick={handleRunClick}
+                    data-testid="run-button"
+                >
                     <Play className="size-3.5 mr-1" />
                     {t('run')}
                 </Button>
-                <Button variant="outline" size="sm" className={`${!dark && 'bg-[#fff]'} h-8 px-6`} onClick={async () => {
-                    window.flow_version = Number(version.id)
-                    await handleSaveClick()
-                    forceUpdateFlow({ ...flow }) // 更新flow状态, 用于保存时对比差异
-                }}>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`${!dark && 'bg-[#fff]'} h-8 px-6`} 
+                    onClick={async () => {
+                        window.flow_version = Number(version.id)
+                        await handleSaveClick()
+                        forceUpdateFlow({ ...flow }) // 更新flow状态, 用于保存时对比差异
+                    }}
+                    data-testid="save-button"
+                >
                     {t('save')}
                 </Button>
                 {
