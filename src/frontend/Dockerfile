@@ -1,9 +1,19 @@
-FROM node:20-alpine as frontend_build
+FROM node:20-alpine AS frontend_build
 ARG BACKEND
 WORKDIR /app
 COPY . /app
-RUN cd /app/platform && npm install --registry=https://registry.npmmirror.com && npm run build
-RUN cd /app/client && npm install --registry=https://registry.npmmirror.com && npm run build
+
+# Build platform first
+RUN cd /app/platform && \
+    npm install --registry=https://registry.npmmirror.com --prefer-offline --no-audit && \
+    npm run build && \
+    rm -rf node_modules
+
+# Build client
+RUN cd /app/client && \
+    npm install --registry=https://registry.npmmirror.com --prefer-offline --no-audit && \
+    npm run build && \
+    rm -rf node_modules
 
 FROM nginx
 COPY --from=frontend_build /app/platform/build/ /usr/share/nginx/html/platform

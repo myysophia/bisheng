@@ -44,7 +44,7 @@ jobs:
           context: ./src/backend/
           file: ./src/backend/base.Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             ${{ env.ACR_REGISTRY }}/tangshu/bisheng-backend:base.v3
           cache-from: type=registry,ref=${{ env.ACR_REGISTRY }}/tangshu/bisheng-backend:base.v3
@@ -81,7 +81,7 @@ jobs:
           context: ./src/backend/
           file: ./src/backend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build-args: |
             BASE_IMAGE=${{ env.ACR_REGISTRY }}/tangshu/bisheng-backend:base.v3
           tags: |
