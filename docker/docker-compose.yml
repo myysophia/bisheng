@@ -93,7 +93,7 @@ services:
   
   backend_worker:
     container_name: bisheng-backend-worker
-    image: dataelement/bisheng-backend:v2.0.3
+    image: cr.dataelem.com/dataelement/bisheng-backend:latest
     environment:
       TZ: Asia/Shanghai
       BS_MILVUS_CONNECTION_ARGS: '{"host":"milvus","port":"19530","user":"","password":"","secure":false}'

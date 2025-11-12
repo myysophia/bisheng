@@ -27,7 +27,6 @@ import ProgressPage from './Education/pages/ProgressPage';
 import PracticeEnvironment from './Education/pages/PracticeEnvironment';
 import GuidedBuilder from './Education/pages/GuidedBuilder';
 import CreationSuccess from './Education/pages/CreationSuccess';
-import TestPage from './Education/pages/TestPage';
 
 const AuthLayout = () => (
   <AuthContextProvider>
@@ -145,10 +144,6 @@ export const router = createBrowserRouter([
           {
             path: 'success',
             element: <CreationSuccess />,
-          },
-          {
-            path: 'test',
-            element: <TestPage />,
           },
         ],
       },
