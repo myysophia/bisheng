@@ -23,13 +23,13 @@ export default function EvaluationModel({ llmOptions, onBack }) {
     const { message } = useToast()
     const handleSave = () => {
         if (!selectedModel) {
-            return message({ variant: 'error', description: t('model.defaultEvaluationFeature') + t('bs:required') })
+            return message({ variant: 'error', description: t('defaultEvaluationFeature') + t('bs:required') })
         }
         const data = {
             model_id: selectedModel
         };
         captureAndAlertRequestErrorHoc(updateEvaluationModelConfig(data).then(res => {
-            message({ variant: 'success', description: t('model.saveSuccess') })
+            message({ variant: 'success', description: t('saveSuccess') })
         }));
     };
 
@@ -40,7 +40,7 @@ export default function EvaluationModel({ llmOptions, onBack }) {
     return (
         <div className="max-w-[520px] mx-auto">
             <div className="mt-10">
-                <Label className="bisheng-label">{t('model.defaultEvaluationFeature')}<span className="text-red-500 text-xs">*</span></Label>
+                <Label className="bisheng-label">{t('defaultEvaluationFeature')}<span className="text-red-500 text-xs">*</span></Label>
                 <ModelSelect
                     label={''}
                     value={selectedModel}
@@ -49,8 +49,8 @@ export default function EvaluationModel({ llmOptions, onBack }) {
                 />
             </div>
             <div className="mt-10 text-center space-x-6">
-                <Button className="px-6" variant="outline" onClick={onBack}>{t('model.cancel')}</Button>
-                <Button className="px-10" onClick={handleSave}>{t('model.save')}</Button>
+                <Button className="px-6" variant="outline" onClick={onBack}>{t('cancel')}</Button>
+                <Button className="px-10" onClick={handleSave}>{t('save')}</Button>
             </div>
         </div>
     );

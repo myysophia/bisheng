@@ -49,8 +49,8 @@ const ModelRow = ({ item, index, llmOptions, updateField, deleteRow }) => {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
-                        <SelectItem value="1">{t('model.yes')}</SelectItem>
-                        <SelectItem value="0">{t('model.no')}</SelectItem>
+                        <SelectItem value="1">{t('yes')}</SelectItem>
+                        <SelectItem value="0">{t('no')}</SelectItem>
                     </SelectGroup>
                 </SelectContent>
             </Select>
@@ -71,8 +71,8 @@ const ModelRow = ({ item, index, llmOptions, updateField, deleteRow }) => {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
-                        <SelectItem value="1">{t('model.yes')}</SelectItem>
-                        <SelectItem value="0">{t('model.no')}</SelectItem>
+                        <SelectItem value="1">{t('yes')}</SelectItem>
+                        <SelectItem value="0">{t('no')}</SelectItem>
                     </SelectGroup>
                 </SelectContent>
             </Select>
@@ -174,18 +174,18 @@ export default function AssisModel({ llmOptions, onBack }) {
     const handleSave = () => {
         console.log('Form data to save:', form);
         if (form.llm_list.some(el => el.model_id === null)) {
-            return message({ variant: 'error', description: t('model.assistantInferenceModel') + t('bs:required') })
+            return message({ variant: 'error', description: t('assistantInferenceModel') + t('bs:required') })
         }
         if (form.auto_llm.model_id === null) {
-            return message({ variant: 'error', description: t('model.assistantAutoOptimizationModel') + t('bs:required') })
+            return message({ variant: 'error', description: t('assistantAutoOptimizationModel') + t('bs:required') })
         }
         const uniqueList = uniqBy(form.llm_list, 'model_id');
         if (uniqueList.length !== form.llm_list.length) {
-            return message({ variant: 'error', description: t('model.assistantInferenceModelRepetition') })
+            return message({ variant: 'error', description: t('assistantInferenceModelRepetition') })
         }
 
         captureAndAlertRequestErrorHoc(updateAssistantModelConfig(form).then(res => {
-            message({ variant: 'success', description: t('model.saveSuccess') })
+            message({ variant: 'success', description: t('saveSuccess') })
         }));
     };
 
@@ -196,24 +196,24 @@ export default function AssisModel({ llmOptions, onBack }) {
     return (
         <div className="w-[70vw] mx-auto pt-2">
             <div className="mb-6">
-                <span className="pl-1">{t('model.assistantInferenceModel')}</span>
+                <span className="pl-1">{t('assistantInferenceModel')}</span>
                 <div className="mt-2 border p-4 rounded-md bg-muted">
                     <div className="grid mb-4 items-center" style={{ gridTemplateColumns: "repeat(2, 1fr) 80px 110px 68px 90px 40px" }}>
-                        <Label className="bisheng-label">{t('model.model')}<span className="text-red-500 text-xs">*</span></Label>
+                        <Label className="bisheng-label">{t('model')}<span className="text-red-500 text-xs">*</span></Label>
                         <Label className="bisheng-label">
-                            <span>{t('model.assistantExecutionMode')}</span>
-                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('model.assistantExecutionModeTooltip')} />
+                            <span>{t('assistantExecutionMode')}</span>
+                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('assistantExecutionModeTooltip')} />
                         </Label>
-                        <Label className="bisheng-label">{t('model.streamingOutput')}</Label>
+                        <Label className="bisheng-label">{t('streamingOutput')}</Label>
                         <Label className="bisheng-label">
-                            <span>{t('model.assistantKnowledgeBaseMaxCharacters')}</span>
-                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('model.assistantKnowledgeBaseMaxCharactersTooltip')} />
+                            <span>{t('assistantKnowledgeBaseMaxCharacters')}</span>
+                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('assistantKnowledgeBaseMaxCharactersTooltip')} />
                         </Label>
                         <Label className="bisheng-label">
-                            <span>{t('model.reorderAfterRetrieval')}</span>
-                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('model.reorderAfterRetrievalTooltip')} />
+                            <span>{t('reorderAfterRetrieval')}</span>
+                            <QuestionTooltip className="relative top-0.5 ml-1" content={t('reorderAfterRetrievalTooltip')} />
                         </Label>
-                        <Label className="bisheng-label text-center">{t('model.setAsDefault')}</Label>
+                        <Label className="bisheng-label text-center">{t('setAsDefault')}</Label>
                         <div></div>
                     </div>
                     {form.llm_list.map((item, index) => (
@@ -232,11 +232,11 @@ export default function AssisModel({ llmOptions, onBack }) {
                 </div>
             </div>
             <div className="">
-                <span className="pl-1">{t('model.assistantAutoOptimizationModel')}</span>
+                <span className="pl-1">{t('assistantAutoOptimizationModel')}</span>
                 <div className="mt-2 border p-4 rounded-md bg-muted">
                     <div className="grid grid-cols-4 gap-2">
-                        <Label className="bisheng-label">{t('model.model')}<span className="text-red-500 text-xs">*</span></Label>
-                        <Label className="bisheng-label">{t('model.streamingOutput')}</Label>
+                        <Label className="bisheng-label">{t('model')}<span className="text-red-500 text-xs">*</span></Label>
+                        <Label className="bisheng-label">{t('streamingOutput')}</Label>
                     </div>
                     <div className="grid grid-cols-4 gap-2 mt-4">
                         <ModelSelect
@@ -251,8 +251,8 @@ export default function AssisModel({ llmOptions, onBack }) {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectItem value="1">{t('model.yes')}</SelectItem>
-                                    <SelectItem value="0">{t('model.no')}</SelectItem>
+                                    <SelectItem value="1">{t('yes')}</SelectItem>
+                                    <SelectItem value="0">{t('no')}</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -260,8 +260,8 @@ export default function AssisModel({ llmOptions, onBack }) {
                 </div>
             </div>
             <div className="mt-10 text-center space-x-6">
-                <Button className="px-6" variant="outline" onClick={onBack}>{t('model.cancel')}</Button>
-                <Button className="px-10" onClick={handleSave}>{t('model.save')}</Button>
+                <Button className="px-6" variant="outline" onClick={onBack}>{t('cancel')}</Button>
+                <Button className="px-10" onClick={handleSave}>{t('save')}</Button>
             </div>
         </div>
     );

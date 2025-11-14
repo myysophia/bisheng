@@ -146,10 +146,10 @@ export default function KnowledgeModel({ llmOptions, embeddings, onBack }) {
         const { embeddingModelId, extractModelId, qaSimilarModelId, sourceModelId, abstractPrompt } = form
         const errors = []
         if (!embeddingModelId) {
-            errors.push(t('model.defaultEmbeddingModel') + t('bs:required'))
+            errors.push(t('defaultEmbeddingModel') + t('bs:required'))
         }
         if (!qaSimilarModelId) {
-            errors.push(t('model.qaSimilarModel') + t('bs:required'))
+            errors.push(t('qaSimilarModel') + t('bs:required'))
         }
         if (errors.length) return message({ variant: 'error', description: errors })
 
@@ -163,7 +163,7 @@ export default function KnowledgeModel({ llmOptions, embeddings, onBack }) {
         setSaveLoad(true)
         await captureAndAlertRequestErrorHoc(updateKnowledgeModelConfig(data).then(res => {
             lastSaveFormDataRef.current = data
-            message({ variant: 'success', description: t('model.saveSuccess') })
+            message({ variant: 'success', description: t('saveSuccess') })
         }))
         setSaveLoad(false)
     };
@@ -185,31 +185,31 @@ export default function KnowledgeModel({ llmOptions, embeddings, onBack }) {
         <div className="max-w-[520px] mx-auto gap-y-4 flex flex-col mt-16 relative">
             <ModelSelect
                 required
-                label={t('model.defaultEmbeddingModel')}
+                label={t('defaultEmbeddingModel')}
                 value={form.embeddingModelId}
                 options={embeddings}
                 onChange={(val) => setForm({ ...form, embeddingModelId: val })}
             />
             <ModelSelect
                 close
-                label={t('model.sourceTracingModel')}
-                tooltipText={t('model.sourceTracingModelTooltip')}
+                label={t('sourceTracingModel')}
+                tooltipText={t('sourceTracingModelTooltip')}
                 value={form.sourceModelId}
                 options={llmOptions}
                 onChange={(val) => setForm({ ...form, sourceModelId: val })}
             />
             <ModelSelect
                 close
-                label={t('model.documentSummaryModel')}
-                tooltipText={t('model.documentSummaryModelTooltip')}
+                label={t('documentSummaryModel')}
+                tooltipText={t('documentSummaryModelTooltip')}
                 value={form.extractModelId}
                 options={llmOptions}
                 onChange={(val) => setForm({ ...form, extractModelId: val })}
             />
             <ModelSelect
                 required
-                label={t('model.qaSimilarModel')}
-                tooltipText={t('model.qaSimilarModelTooltip')}
+                label={t('qaSimilarModel')}
+                tooltipText={t('qaSimilarModelTooltip')}
                 value={form.qaSimilarModelId}
                 options={llmOptions}
                 onChange={(val) => setForm({ ...form, qaSimilarModelId: val })}
@@ -228,14 +228,14 @@ export default function KnowledgeModel({ llmOptions, embeddings, onBack }) {
                 </PromptDialog>
             </div>
             <div className="mt-10 text-center space-x-6">
-                <Button className="px-6" variant="outline" onClick={onBack}>{t('model.cancel')}</Button>
+                <Button className="px-6" variant="outline" onClick={onBack}>{t('cancel')}</Button>
                 <Button
                     className="px-10"
                     disabled={saveload}
                     onClick={handleSave}
                 >
                     {saveload && <LoadIcon className="mr-2" />}
-                    {t('model.save')}
+                    {t('save')}
                 </Button>
             </div>
         </div>

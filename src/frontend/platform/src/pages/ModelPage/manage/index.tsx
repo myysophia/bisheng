@@ -34,7 +34,7 @@ function CustomTableRow({ data, index, user, onModel, onCheck }) {
                 <Button variant="link" onClick={() => onModel(data.id)}
                     disabled={user.role !== 'admin'}
                     className={`link px-0 pl-6`}>
-                    {t('model.modelConfiguration')}
+                    {t('modelConfiguration')}
                 </Button>
             </div>
         </div>
@@ -43,10 +43,10 @@ function CustomTableRow({ data, index, user, onModel, onCheck }) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">{t('model.modelName')}</TableHead>
-                            <TableHead className="w-[200px] min-w-[100px]">{t('model.modelType')}</TableHead>
-                            <TableHead className="w-[200px] min-w-[100px]">{t('model.status')}</TableHead>
-                            <TableHead className="w-[100px] min-w-[100px]">{t('model.onlineOfflineOperation')}</TableHead>
+                            <TableHead className="w-[200px]">{t('modelName')}</TableHead>
+                            <TableHead className="w-[200px] min-w-[100px]">{t('modelType')}</TableHead>
+                            <TableHead className="w-[200px] min-w-[100px]">{t('status')}</TableHead>
+                            <TableHead className="w-[100px] min-w-[100px]">{t('onlineOfflineOperation')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -56,7 +56,7 @@ function CustomTableRow({ data, index, user, onModel, onCheck }) {
                                 <TableCell>{m.model_type}</TableCell>
                                 <TableCell>
                                     <span className={['text-green-500', 'text-orange-500', 'text-gray-500'][m.status]}>
-                                        {[t('model.available'), t('model.abnormal'), t('model.unknown')][m.status]}
+                                        {[t('available'), t('abnormal'), t('unknown')][m.status]}
                                     </span>
                                     {m.status === 1 && <QuestionTooltip className=" align-middle" content={m.remark} />}
                                 </TableCell>
@@ -68,7 +68,7 @@ function CustomTableRow({ data, index, user, onModel, onCheck }) {
                     </TableBody>
                     {!data.models.length && <TableFooter>
                         <TableRow>
-                            <TableCell colSpan={9} className="text-center text-gray-400">{t('model.empty')}</TableCell>
+                            <TableCell colSpan={9} className="text-center text-gray-400">{t('empty')}</TableCell>
                         </TableRow>
                     </TableFooter>}
                 </Table>
@@ -145,15 +145,15 @@ export default function Management() {
             <div className="flex justify-end gap-4">
                 {user.role === 'admin' && <Button className="text-red-500" onClick={() => setSystemModel(true)} variant="secondary">
                     <SettingIcon className="text-red-500" />
-                    {t('model.systemModelSettings')}
+                    {t('systemModelSettings')}
                 </Button>}
-                {user.role === 'admin' && <Button onClick={() => setModelId(-1)}>{t('model.addModel')}</Button>}
-                <Button className="bg-black-button" onClick={reload}>{t('model.refresh')}</Button>
+                {user.role === 'admin' && <Button onClick={() => setModelId(-1)}>{t('addModel')}</Button>}
+                <Button className="bg-black-button" onClick={reload}>{t('refresh')}</Button>
             </div>
             <div className="h-[85%]">
                 <div className="flex h-10 justify-between items-center font-medium text-muted-foreground text-sm">
-                    <span className="ml-5">{t('model.serviceProvider')}</span>
-                    <span className="mr-5">{t('model.actions')}</span>
+                    <span className="ml-5">{t('serviceProvider')}</span>
+                    <span className="mr-5">{t('actions')}</span>
                 </div>
                 <div className="pb-20">
                     {
@@ -170,7 +170,7 @@ export default function Management() {
             </div>
         </div>
         <div className="bisheng-table-footer bg-background-login px-6">
-            <p className="desc">{t('model.modelCollectionCaption')}.</p>
+            <p className="desc">{t('modelCollectionCaption')}.</p>
         </div>
     </div>
 

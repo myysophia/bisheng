@@ -163,13 +163,13 @@ export default function WorkbenchModel({ llmOptions, embeddings, onBack }) {
         <div className="max-w-[520px] mx-auto gap-y-4 flex flex-col mt-16 relative">
             <ModelSelect
                 close
-                label={t('model.workVectorModel')}
-                tooltipText={t('model.workVectorModelTooltip')}
+                label={t('workVectorModel')}
+                tooltipText={t('workVectorModelTooltip')}
                 value={form.sourceModelId}
                 options={embeddings}
                 onChange={(val) => setForm({ ...form, sourceModelId: val })}
             />
-            <h3 className="bisheng-label">{t('model.lingsiTaskModel')}</h3>
+            <h3 className="bisheng-label">{t('lingsiTaskModel')}</h3>
       <div className="border rounded-lg p-4 -mt-3">
          
     <div className="flex gap-4">
@@ -177,7 +177,7 @@ export default function WorkbenchModel({ llmOptions, embeddings, onBack }) {
             <ModelSelect
                 close
                 label={t('模型')}
-                tooltipText={t('model.lingsiTaskModelTooltip')}
+                tooltipText={t('lingsiTaskModelTooltip')}
                 value={form.extractModelId}
                 options={llmOptions}
                 onChange={(val) => setForm({ ...form, extractModelId: val })}
@@ -205,14 +205,14 @@ export default function WorkbenchModel({ llmOptions, embeddings, onBack }) {
 </div>
 
             <div className="mt-10 text-center space-x-6">
-                <Button className="px-6" variant="outline" onClick={onBack}>{t('model.cancel')}</Button>
+                <Button className="px-6" variant="outline" onClick={onBack}>{t('cancel')}</Button>
                 <Button
                     className="px-10"
                     disabled={saveload}
                     onClick={handleSaveWithConfirm}
                 >
                     {saveload && <LoadIcon className="mr-2" />}
-                    {t('model.save')}
+                    {t('save')}
                 </Button>
             </div>
         </div>

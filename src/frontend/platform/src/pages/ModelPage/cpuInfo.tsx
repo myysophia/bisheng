@@ -35,12 +35,12 @@ export const CpuDetail = ({ type }) => {
     return <Table className="w-full">
         <TableHeader>
             <TableRow>
-                <TableHead className="w-[200px]">{t('model.machineName')}</TableHead>
-                <TableHead>{t('model.gpuNumber')}</TableHead>
-                <TableHead>{t('model.gpuID')}</TableHead>
-                <TableHead>{t('model.totalMemory')}</TableHead>
-                <TableHead>{t('model.freeMemory')}</TableHead>
-                <TableHead>{t('model.gpuUtilization')}</TableHead>
+                <TableHead className="w-[200px]">{t('machineName')}</TableHead>
+                <TableHead>{t('gpuNumber')}</TableHead>
+                <TableHead>{t('gpuID')}</TableHead>
+                <TableHead>{t('totalMemory')}</TableHead>
+                <TableHead>{t('freeMemory')}</TableHead>
+                <TableHead>{t('gpuUtilization')}</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>

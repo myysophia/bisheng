@@ -30,9 +30,9 @@ function ModelItem({ data, type, onDelete, onInput, onConfig }) {
         const repeated = onInput(value, model.model_type)
 
         setError('')
-        if (!value) setError(t('model.modelNameEmpty'))
-        if (value.length > 100) setError(t('model.modelNameLength'))
-        if (repeated) setError(t('model.modelNameDuplicate'))
+        if (!value) setError(t('modelNameEmpty'))
+        if (value.length > 100) setError(t('modelNameLength'))
+        if (repeated) setError(t('modelNameDuplicate'))
     }
 
     const handleSelectChange = (val) => {
@@ -47,7 +47,7 @@ function ModelItem({ data, type, onDelete, onInput, onConfig }) {
 
     const handleDelClick = () => {
         bsConfirm({
-            desc: t('model.deleteModelConfirmation'),
+            desc: t('deleteModelConfirmation'),
             onOk(next) {
                 onDelete()
                 next()
@@ -74,7 +74,7 @@ function ModelItem({ data, type, onDelete, onInput, onConfig }) {
     return (
         <div className="group w-full border rounded-sm p-4 mb-2">
             <div className="flex items-center justify-between">
-                <span>{model.name.replace('model', t('model.model'))}</span>
+                <span>{model.name.replace('model', t('model'))}</span>
                 <Trash2Icon
                     onClick={handleDelClick}
                     className="w-[16px] h-[16px] opacity-0 group-hover:opacity-100 cursor-pointer text-gray-500"
@@ -83,10 +83,10 @@ function ModelItem({ data, type, onDelete, onInput, onConfig }) {
             <div className="space-y-2 mt-2">
                 <div>
                     <Label className="bisheng-label">
-                        <span>{t('model.modelName')}</span>
+                        <span>{t('modelName')}</span>
                         <QuestionTooltip
                             className="relative top-0.5 ml-1"
-                            content={t('model.modelNameTooltip')}
+                            content={t('modelNameTooltip')}
                         />
                     </Label>
                     <Label className="bisheng-label"></Label>
@@ -94,7 +94,7 @@ function ModelItem({ data, type, onDelete, onInput, onConfig }) {
                     {error && <span className="text-red-500 text-xs">{error}</span>}
                 </div>
                 <div>
-                    <Label className="bisheng-label">{t('model.modelType')}</Label>
+                    <Label className="bisheng-label">{t('modelType')}</Label>
                     <Select value={model.model_type} onValueChange={handleSelectChange}>
                         <SelectTrigger className="h-8">
                             <SelectValue placeholder="" />
@@ -235,20 +235,20 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
             if (exists) {
                 return message({
                     variant: 'warning',
-                    description: t('model.duplicateServiceProviderName')
+                    description: t('duplicateServiceProviderName')
                 })
             }
             if (!formData.name || formData.name.length > 100) {
                 return message({
                     variant: 'warning',
-                    description: t('model.duplicateServiceProviderNameValidation')
+                    description: t('duplicateServiceProviderNameValidation')
                 })
             }
             const [config, errorKey] = formRef.current.getData();
             if (errorKey) {
                 return message({
                     variant: 'warning',
-                    description: `${errorKey} ${t('model.notBeEmpty')}`
+                    description: `${errorKey} ${t('notBeEmpty')}`
                 })
             }
 
@@ -263,13 +263,13 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
             if (error) {
                 return message({
                     variant: 'warning',
-                    description: t('model.modelNameValidation')
+                    description: t('modelNameValidation')
                 })
             }
             if (repeat) {
                 return message({
                     variant: 'warning',
-                    description: t('model.modelDuplicate')
+                    description: t('modelDuplicate')
                 })
             }
 
@@ -281,12 +281,12 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
                     //         description: res.msg
                     //     })
                     // }
-                    onAfterSave(res.code === 10803 ? res.msg : t('model.addSuccess'))
+                    onAfterSave(res.code === 10803 ? res.msg : t('addSuccess'))
                     onBack()
                 }))
             } else {
                 await captureAndAlertRequestErrorHoc(updateLLmServer({ ...formData, config }).then(res => {
-                    onAfterSave(t('model.updateSuccess'))
+                    onAfterSave(t('updateSuccess'))
                     onBack()
                 }))
             }
@@ -299,11 +299,11 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
 
     const handleModelDel = () => {
         bsConfirm({
-            desc: t('model.deleteConfirmation'),
+            desc: t('deleteConfirmation'),
             onOk(next) {
                 // 删除接口
                 captureAndAlertRequestErrorHoc(deleteLLmServer(id).then(res => {
-                    onAfterSave(t('model.deleteSuccess'))
+                    onAfterSave(t('deleteSuccess'))
                 }))
 
                 onBack()
@@ -328,7 +328,7 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
                     <ArrowLeft strokeWidth={1.5} className="side-bar-button-size" />
                 </button>
             </ShadTooltip>
-            <span>{id === -1 ? t('model.addModel') : t('model.modelConfiguration')}</span>
+            <span>{id === -1 ? t('addModel') : t('modelConfiguration')}</span>
         </div>
         <div className="w-[50%] min-w-64 px-4 pb-10 mx-auto mt-6 h-[calc(100vh-220px)] overflow-y-auto">
             <div className="mb-2">
@@ -346,8 +346,8 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
             </div>
             <div className="mb-2">
                 <Label className="bisheng-label">
-                    <span>{t('model.serviceProviderName')}</span>
-                    <QuestionTooltip className="relative top-0.5 ml-1" content={t('model.serviceProviderNameTooltip')} />
+                    <span>{t('serviceProviderName')}</span>
+                    <QuestionTooltip className="relative top-0.5 ml-1" content={t('serviceProviderNameTooltip')} />
                 </Label>
                 <Input value={formData.name} onChange={(e) => {
                     const name = e.target.value
@@ -367,19 +367,19 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
             <div className={formData.type ? 'visible' : 'invisible'}>
                 <div className="mb-2">
                     <div className="flex items-center gap-x-6">
-                        <Label className="bisheng-label">{t('model.dailyCallLimit')}</Label>
+                        <Label className="bisheng-label">{t('dailyCallLimit')}</Label>
                         <Switch checked={formData.limit_flag} onCheckedChange={(val) => setFormData(form => ({ ...form, limit_flag: val }))} />
                         <div className={`flex items-center gap-x-2 ${formData.limit_flag ? '' : 'invisible'}`}>
                             <Input type="number" value={formData.limit} onChange={(e) => setFormData({ ...formData, limit: Number(e.target.value) })}
                                 className="w-24 h-8"
                             ></Input>
-                            <span>{t('model.timesPerDay')}</span>
+                            <span>{t('timesPerDay')}</span>
                         </div>
                     </div>
                 </div>
                 {/* 模型卡片 */}
                 <div className="mb-2">
-                    <Label className="bisheng-label">{t('model.model')}</Label>
+                    <Label className="bisheng-label">{t('model')}</Label>
                     <div className="w-[92%]">
                         {
                             formData.models.map((m, i) => <ModelItem
@@ -393,22 +393,22 @@ export default function ModelConfig({ id, onGetName, onBack, onReload, onBerforS
                         }
                         <Button className="w-full mt-2 border-dashed border-border" variant="outline" onClick={handleAddModel}>
                             <Plus className="size-5 text-primary mr-1" />
-                            <span>{t('model.addModel')}</span>
+                            <span>{t('addModel')}</span>
                         </Button>
                     </div>
                 </div>
             </div>
         </div>
         <div className="absolute right-0 bottom-0 p-4 flex gap-4">
-            {id !== -1 && <Button className="px-8" variant="destructive" onClick={handleModelDel}>{t('model.delete')}</Button>}
-            <Button className="px-8" variant="outline" onClick={() => onBack()}>{t('model.cancel')}</Button>
+            {id !== -1 && <Button className="px-8" variant="destructive" onClick={handleModelDel}>{t('delete')}</Button>}
+            <Button className="px-8" variant="outline" onClick={() => onBack()}>{t('cancel')}</Button>
             <LoadButton
                 className="px-16"
                 disabled={!formData.type}
                 loading={isLoading}
                 onClick={handleSave}
             >
-                {isLoading ? '模型状态检测中' : t('model.save')}
+                {isLoading ? '模型状态检测中' : t('save')}
             </LoadButton>
         </div>
     </div>

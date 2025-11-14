@@ -132,7 +132,7 @@ export const Finetune = () => {
         <Dialog open={showCpu.show} onOpenChange={(show) => setShowCpu({ ...showCpu, show })}>
             <DialogContent className="sm:max-w-[80%]">
                 <DialogHeader>
-                    <DialogTitle>{t('model.gpuResourceUsageTitle')}</DialogTitle>
+                    <DialogTitle>{t('gpuResourceUsageTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-wrap justify-center overflow-y-auto no-scrollbar">
                     {showCpu.show && <CpuDetail type={showCpu.type} />}
