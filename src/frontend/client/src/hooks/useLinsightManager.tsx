@@ -193,6 +193,14 @@ export const useGenerateSop = (versionId, setVersionId, setVersions) => {
     }, [versionId])
 
     // 生成会话
+    const getAuthHeaders = () => {
+        if (typeof window === 'undefined') {
+            return {};
+        }
+        const token = localStorage.getItem('token') || localStorage.getItem('ws_token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     const generateSop = (_versionId, linsightSubmission?: any) => {
         const payload = {
             linsight_session_version_id: _versionId,
@@ -207,8 +215,10 @@ export const useGenerateSop = (versionId, setVersionId, setVersions) => {
         const sse = new SSE(`${__APP_ENV__.BASE_URL}/api/v1/linsight/workbench/generate-sop`, {
             payload: JSON.stringify(payload),
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
+            withCredentials: true
         });
 
         let content = ''
@@ -285,8 +295,10 @@ export const useGenerateSop = (versionId, setVersionId, setVersions) => {
                 const sse = new SSE(`${__APP_ENV__.BASE_URL}/api/v1/linsight/workbench/submit`, {
                     payload: JSON.stringify(payload),
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
                     },
+                    withCredentials: true
                 });
 
                 let versionId = ''
