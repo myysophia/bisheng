@@ -1,15 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo, useContext, useCallback } from 'react';
 import { BookOpen, Clock, Users, Star, TrendingUp, Award, Play, ArrowRight } from 'lucide-react';
+import { locationContext } from '@/contexts/locationContext';
+import { resolveWorkspaceUrl, buildWorkspaceLink } from '@/util/workspace';
 
 export default function EducationPage() {
-  const navigate = useNavigate();
   const [learningStats, setLearningStats] = useState({
     total_courses: 3,
     total_students: 2522,
     average_rating: 4.8,
     total_duration: 280
   });
+  const { appConfig } = useContext(locationContext);
+  const workspaceBase = useMemo(() => resolveWorkspaceUrl(appConfig.workspaceUrl), [appConfig.workspaceUrl]);
+
+  const openWorkspacePage = useCallback((relativePath: string) => {
+    if (typeof window === 'undefined') return;
+    const targetUrl = buildWorkspaceLink(workspaceBase, relativePath);
+    window.open(targetUrl, '_blank', 'noopener');
+  }, [workspaceBase]);
 
   // 模拟学习路径数据
   const learningPaths = [
@@ -53,34 +61,37 @@ export default function EducationPage() {
   const handleStartLearning = () => {
     // 确保token同步到客户端可以访问的key
     const wsToken = localStorage.getItem('ws_token');
-    const testToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ7XCJ1c2VyX25hbWVcIjogXCJ0ZXN0QDEyMy5jb21cIiwgXCJ1c2VyX2lkXCI6IDEsIFwicm9sZVwiOiBcImFkbWluXCJ9IiwiaWF0IjoxNzYyMTU2OTY5LCJuYmYiOjE3NjIxNTY5NjksImp0aSI6ImIxZWQ2YmU1LTA2MWYtNDM4YS1iYTYyLWVkZGJhZGRjZjA3ZiIsImV4cCI6MTc2MjI0MzM2OSwidHlwZSI6ImFjY2VzcyIsImZyZXNoIjpmYWxzZX0.uhK_bJ6lQHym38xkP7n_l2H1rxGsTPPUM6ErjMzHbP8';
+    const userInfo = localStorage.getItem('userInfo');
     
     console.log('🔧 平台前端：准备跳转到教学页面');
     
-    if (wsToken) {
-      // 同步token到客户端使用的key
-      localStorage.setItem('token', wsToken);
-      console.log('✅ 使用平台token:', wsToken.substring(0, 20) + '...');
-    } else {
-      // 如果没有平台token，设置测试token
-      localStorage.setItem('ws_token', testToken);
-      localStorage.setItem('token', testToken);
-      console.log('✅ 设置测试token');
+    if (!wsToken) {
+      console.error('❌ 未找到认证token，请先登录');
+      alert('请先登录后再访问教学页面');
+      return;
     }
     
-    // 设置用户信息和教育演示模式
-    const testUser = {
-      user_name: 'test@123.com',
-      user_id: 1,
-      role: 'admin'
-    };
-    localStorage.setItem('user', JSON.stringify(testUser));
-    localStorage.setItem('educationDemoMode', 'true');
+    // 同步token到客户端使用的key
+    localStorage.setItem('token', wsToken);
+    console.log('✅ 使用平台token:', wsToken.substring(0, 20) + '...');
+    
+    // 同步用户信息
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+        localStorage.setItem('user', JSON.stringify({
+          user_name: user.user_name,
+          user_id: user.user_id,
+          role: user.role || 'user'
+        }));
+        console.log('✅ 用户信息已同步');
+      } catch (error) {
+        console.error('❌ 解析用户信息失败:', error);
+      }
+    }
     
     console.log('🚀 跳转到客户端教学页面');
-    
-    // 跳转到客户端的教学页面
-    window.open('http://localhost:4001/workspace/education', '_blank');
+    openWorkspacePage('/education');
   };
 
   const handleCourseClick = (courseId: string) => {
@@ -91,7 +102,7 @@ export default function EducationPage() {
     }
     
     // 跳转到具体课程
-    window.open(`http://localhost:4001/workspace/education/courses/${courseId}`, '_blank');
+    openWorkspacePage(`/education/courses/${courseId}`);
   };
 
   return (
@@ -175,7 +186,7 @@ export default function EducationPage() {
                 if (wsToken) {
                   localStorage.setItem('token', wsToken);
                 }
-                window.open('http://localhost:4001/workspace/education/progress', '_blank');
+                openWorkspacePage('/education/progress');
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >

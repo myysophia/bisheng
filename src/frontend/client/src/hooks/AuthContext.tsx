@@ -58,20 +58,44 @@ const AuthContextProvider = ({
     console.log('🔧 AuthContext: 初始化检查', { 
       storedToken: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
       storedUser: storedUser ? 'exists' : 'null',
-      currentUser: user ? user.user_name : 'null',
+      currentUser: user ? user.username : 'null',
       isAuthenticated 
     });
     
+    const clearRedirectFlag = () => {
+      const redirecting = sessionStorage.getItem('auth_redirecting');
+      if (redirecting) {
+        console.log('🔁 AuthContext: 清除残留的重定向标记');
+        sessionStorage.removeItem('auth_redirecting');
+      }
+    };
+
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         console.log('🔧 AuthContext: 恢复用户状态', { user: parsedUser });
         
+        // 转换用户数据格式以匹配TUser类型
+        const normalizedUser = {
+          id: parsedUser.user_id?.toString() || parsedUser.id || '',
+          username: parsedUser.user_name || parsedUser.username || '',
+          email: parsedUser.email || parsedUser.user_name || '',
+          name: parsedUser.name || parsedUser.user_name || '',
+          avatar: parsedUser.avatar || '',
+          role: parsedUser.role || 'user',
+          provider: parsedUser.provider || 'local',
+          createdAt: parsedUser.createdAt || new Date().toISOString(),
+          updatedAt: parsedUser.updatedAt || new Date().toISOString(),
+        };
+        
         // 无论当前user状态如何，都重新设置
-        setUser(parsedUser);
+        setUser(normalizedUser);
         setToken(storedToken);
         setTokenHeader(storedToken);
         setIsAuthenticated(true);
+        
+        // 清除重定向标记
+        clearRedirectFlag();
         
         console.log('✅ AuthContext: 认证状态已设置');
       } catch (error) {
@@ -83,6 +107,8 @@ const AuthContextProvider = ({
       }
     } else {
       console.log('⚠️ AuthContext: 缺少认证数据', { hasToken: !!storedToken, hasUser: !!storedUser });
+      // 即使没有完整的本地认证信息，也需要清理残留的重定向状态，防止后续401无法自动跳转
+      clearRedirectFlag();
     }
   }, []);
 
@@ -195,18 +221,11 @@ const AuthContextProvider = ({
     if (userQuery.data) {
       setUser(userQuery.data);
     } else if (userQuery.isError) {
-      // 检查是否是开发环境或教育演示模式
-      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
-      const isDev = import.meta.env.DEV;
-      
-      if (isEducationDemo || isDev) {
-        console.log('🔧 AuthContext: 开发/演示模式，跳过用户查询错误处理');
-        // 在开发环境或教育演示模式下，不跳转到登录页面
-        return;
-      }
-      
       doSetError((userQuery.error as Error).message);
-      navigate(`/${__APP_ENV__.BISHENG_HOST}/login`, { replace: true });
+      // 如果没有认证信息，跳转到主平台登录
+      if (!isAuthenticated) {
+        window.location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`;
+      }
     }
     if (error != null && error && isAuthenticated) {
       doSetError(undefined);
