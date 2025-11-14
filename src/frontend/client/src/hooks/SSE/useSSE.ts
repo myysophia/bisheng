@@ -94,12 +94,14 @@ export default function useSSE(
 
     let textIndex = null;
 
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
     const sse = new SSE(payloadData.server, {
       payload: JSON.stringify(payload),
       headers: {
         'Content-Type': 'application/json',
-        // Authorization: `Bearer ${token}`
+        ...authHeaders,
       },
+      withCredentials: true,
     });
 
     sse.addEventListener('attachment', (e: MessageEvent) => {
@@ -199,7 +201,7 @@ export default function useSSE(
           // }
           sse.headers = {
             'Content-Type': 'application/json',
-            // Authorization: `Bearer ${token}`,
+            ...authHeaders,
           };
 
           // request.dispatchTokenUpdatedEvent(token);
