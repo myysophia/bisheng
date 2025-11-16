@@ -47,6 +47,7 @@ jobs:
           build-args: |
             APP_NAME=bisheng-frontend
             APP_VERSION=${{ steps.get_version.outputs.VERSION }}
+            WORKBENCH_BASE_URL=${{ secrets.WORKBENCH_BASE_URL }}
           tags: |
             ${{ env.ACR_REGISTRY }}/tangshu/bisheng-frontend:latest
             ${{ env.ACR_REGISTRY }}/tangshu/bisheng-frontend:${{ steps.get_version.outputs.VERSION }}
