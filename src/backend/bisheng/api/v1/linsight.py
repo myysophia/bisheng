@@ -529,9 +529,10 @@ async def task_message_stream(
     """
 
     try:
+        # 优先使用前端透传的 token，避免跨域 WebSocket 无法携带 Cookie
         if t:
-            Authorize.jwt_required(auth_from='websocket', token=t)
             Authorize._token = t
+            Authorize.jwt_required(auth_from='websocket', token=t)
         else:
             Authorize.jwt_required(auth_from='websocket', websocket=websocket)
         payload = Authorize.get_jwt_subject()
