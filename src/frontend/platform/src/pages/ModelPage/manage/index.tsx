@@ -17,7 +17,8 @@ import { LoadingIcon } from "@/components/bs-icons/loading"
 import { useQuery } from "react-query"
 
 function CustomTableRow({ data, index, user, onModel, onCheck }) {
-    const { t } = useTranslation()
+    // 使用模型与基础命名空间，保证中文模式下文案正确显示
+    const { t } = useTranslation(['model', 'bs'])
     const [expand, setExpand] = useState(false)
 
     return <div className="text-sm bs-table-row">
@@ -78,9 +79,10 @@ function CustomTableRow({ data, index, user, onModel, onCheck }) {
 }
 
 export default function Management() {
-    const { t, i18n } = useTranslation();
+    // 使用模型与基础命名空间，保证中文模式下文案正确显示
+    const { t, i18n } = useTranslation(['model', 'bs']);
     useEffect(() => {
-        i18n.loadNamespaces('model');
+        i18n.loadNamespaces(['model', 'bs']);
     }, [i18n]);
 
     const [data, setData] = useState([])
