@@ -41,6 +41,7 @@ type MenuItem = {
     to?: string;
     href?: string;
     target?: string;
+    onClick?: (e: React.MouseEvent) => void;
 };
 
 type MenuGroup = {
@@ -153,7 +154,59 @@ export default function MainLayout() {
                         label: t('menu.workspace'),
                         icon: <ApplicationIcon className="h-5 w-5" />,
                         href: workspaceLink,
-                        target: '_blank'
+                        target: '_blank',
+                        onClick: (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            // 同步 token 和用户信息到工作台
+                            const wsToken = localStorage.getItem('ws_token');
+                            const userInfo = localStorage.getItem('userInfo');
+                            
+                            if (!wsToken) {
+                                console.error('❌ 未找到认证token，请先登录');
+                                alert('请先登录后再访问工作台');
+                                return;
+                            }
+                            
+                            // 同步token到客户端使用的key (同源情况下生效)
+                            localStorage.setItem('token', wsToken);
+                            console.log('✅ Token已同步到工作台');
+                            
+                            // 同步用户信息 (同源情况下生效)
+                            let userDataStr = '';
+                            if (userInfo) {
+                                try {
+                                    const user = JSON.parse(userInfo);
+                                    const userData = {
+                                        user_name: user.user_name,
+                                        user_id: user.user_id,
+                                        role: user.role || 'user'
+                                    };
+                                    localStorage.setItem('user', JSON.stringify(userData));
+                                    userDataStr = JSON.stringify(userData);
+                                    console.log('✅ 用户信息已同步');
+                                } catch (error) {
+                                    console.error('❌ 解析用户信息失败:', error);
+                                }
+                            }
+                            
+                            // 构建工作台链接
+                            // 开发环境下跨端口访问，需要通过 URL 参数传递 token
+                            const targetUrl = new URL(workspaceLink);
+                            const currentUrl = new URL(window.location.href);
+                            const isCrossOrigin = targetUrl.origin !== currentUrl.origin;
+                            
+                            if (isCrossOrigin) {
+                                // 跨域情况：通过 URL 参数传递认证信息
+                                targetUrl.searchParams.set('auth_token', wsToken);
+                                if (userDataStr) {
+                                    targetUrl.searchParams.set('auth_user', encodeURIComponent(userDataStr));
+                                }
+                                console.log('🔗 跨域访问，通过URL参数传递认证信息');
+                            }
+                            
+                            // 打开工作台
+                            window.open(targetUrl.toString(), '_blank');
+                        }
                     }
                 ]
             });
@@ -386,6 +439,7 @@ export default function MainLayout() {
                                                             target={item.target}
                                                             rel={item.target === '_blank' ? "noopener noreferrer" : undefined}
                                                             className={`${navBaseClass} ${navPaddingClass}`}
+                                                            onClick={item.onClick}
                                                         >
                                                             {content}
                                                         </a>

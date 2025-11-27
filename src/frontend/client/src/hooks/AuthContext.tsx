@@ -50,8 +50,35 @@ const AuthContextProvider = ({
   const { data: adminRole = null } = useGetRole(SystemRoles.ADMIN, {
     enabled: !!(isAuthenticated && user?.role === SystemRoles.ADMIN),
   });
-  // 初始化时从localStorage恢复用户状态
+  // 初始化时从localStorage恢复用户状态，或从URL参数获取（跨域场景）
   useEffect(() => {
+    // 首先检查 URL 参数中是否有认证信息（跨域传递场景）
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('auth_token');
+    const urlUser = urlParams.get('auth_user');
+    
+    if (urlToken) {
+      console.log('🔗 AuthContext: 从URL参数获取认证信息');
+      localStorage.setItem('token', urlToken);
+      localStorage.setItem('ws_token', urlToken);
+      if (urlUser) {
+        try {
+          const userData = JSON.parse(decodeURIComponent(urlUser));
+          localStorage.setItem('user', JSON.stringify(userData));
+          console.log('✅ AuthContext: URL认证信息已保存到localStorage');
+        } catch (e) {
+          console.error('❌ AuthContext: 解析URL用户信息失败', e);
+        }
+      }
+      // 清除 URL 中的认证参数，避免泄露
+      urlParams.delete('auth_token');
+      urlParams.delete('auth_user');
+      const newUrl = urlParams.toString() 
+        ? `${window.location.pathname}?${urlParams.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+    
     const storedToken = localStorage.getItem('token') || localStorage.getItem('ws_token');
     const storedUser = localStorage.getItem('user');
     

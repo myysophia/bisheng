@@ -121,14 +121,32 @@ customAxios.interceptors.response.use(
     }
 
     if (error.response.status === 401 && !originalRequest._retry) {
-      console.warn('401 error, refreshing token');
+      console.warn('401 Unauthorized - 认证失败');
       originalRequest._retry = true;
 
-      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
-
-      if (import.meta.env.MODE === 'production' && !isEducationDemo) {
-        location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`
+      // 检查是否已经在重定向中，避免无限循环
+      const isRedirecting = sessionStorage.getItem('auth_redirecting');
+      if (isRedirecting) {
+        console.error('检测到重定向循环，停止重定向');
+        return Promise.reject(error);
       }
+
+      // 清除本地认证信息
+      localStorage.removeItem('token');
+      localStorage.removeItem('ws_token');
+      localStorage.removeItem('user');
+      
+      // 标记正在重定向
+      sessionStorage.setItem('auth_redirecting', 'true');
+      
+      // 跳转到主平台登录页面
+      const bishengHost = __APP_ENV__.BISHENG_HOST || '';
+      const redirectPath = bishengHost ? `/${bishengHost}` : '/';
+      console.log('跳转到主平台登录:', `${location.origin}${redirectPath}?from=workspace`);
+      
+      setTimeout(() => {
+        location.href = `${location.origin}${redirectPath}?from=workspace`;
+      }, 100);
       // } else {
       //   if (location.pathname.indexOf('login') === -1) {
       //     // location.href = '/workspace/login';

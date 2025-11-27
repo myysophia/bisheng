@@ -27,9 +27,10 @@ export const resolveWorkspaceUrl = (preferred?: string) => {
 
     if (typeof window !== 'undefined') {
         const currentUrl = new URL(window.location.href);
-        if (currentUrl.port === '3001') {
-            currentUrl.port = '4001';
-        } else if (!currentUrl.port && currentUrl.hostname === 'localhost') {
+        // 开发环境：platform 在 3001，client 在 4001
+        // 生产环境：都在同一端口，client 通过 /workspace/ 路径访问
+        const isDev = import.meta.env?.DEV || process.env.NODE_ENV === 'development';
+        if (isDev && currentUrl.port === '3001') {
             currentUrl.port = '4001';
         }
         currentUrl.pathname = '/workspace/';

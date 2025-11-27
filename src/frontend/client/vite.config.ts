@@ -8,7 +8,7 @@ import type { Plugin } from 'vite';
 
 const app_env = {
   BASE_URL: '/workspace',
-  BISHENG_HOST: ''
+  BISHENG_HOST: '' // 主平台路径，如果主平台在根路径则留空
 }
 // https://vitejs.dev/config/
 export default defineConfig({
