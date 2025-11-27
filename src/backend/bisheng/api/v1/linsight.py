@@ -518,6 +518,7 @@ async def get_execute_task_detail(
 async def task_message_stream(
         websocket: WebSocket,
         session_version_id: str = Query(..., description="灵思会话版本ID"),
+        t: Optional[str] = Query(default=None, description="前端传递的JWT"),
         Authorize: AuthJWT = Depends()):
     """
     建立灵思任务消息流 websocket
@@ -528,7 +529,11 @@ async def task_message_stream(
     """
 
     try:
-        Authorize.jwt_required(auth_from='websocket', websocket=websocket)
+        if t:
+            Authorize.jwt_required(auth_from='websocket', token=t)
+            Authorize._token = t
+        else:
+            Authorize.jwt_required(auth_from='websocket', websocket=websocket)
         payload = Authorize.get_jwt_subject()
         payload = json.loads(payload)
         login_user = UserPayload(**payload)

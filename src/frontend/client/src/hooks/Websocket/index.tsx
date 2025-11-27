@@ -60,8 +60,18 @@ export const useLinsightWebSocket = (versionId) => {
             return `${url}${normalizedPath}`;
         }
 
+        const token = typeof window !== 'undefined'
+            ? (localStorage.getItem('token') || localStorage.getItem('ws_token'))
+            : '';
+
+        const wsUrl = new URL(`${__APP_ENV__.BASE_URL}/api/v1/linsight/workbench/task-message-stream`, window.location.origin);
+        wsUrl.searchParams.set('session_version_id', id);
+        if (token) {
+            wsUrl.searchParams.set('t', token);
+        }
+
         const websocket = MOCK ? new MockWebSocket(`xx`)
-            : new WebSocket(getWebSocketUrl(`${__APP_ENV__.BASE_URL}/api/v1/linsight/workbench/task-message-stream?session_version_id=${id}`));
+            : new WebSocket(getWebSocketUrl(`${wsUrl.pathname}${wsUrl.search}`));
         connections[id] = websocket;
 
         websocket.onopen = () => {
@@ -336,4 +346,3 @@ export const useLinsightWebSocket = (versionId) => {
 
     return { stop, sendInput };
 };
-
