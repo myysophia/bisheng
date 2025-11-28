@@ -212,14 +212,8 @@ export default function MainLayout() {
             });
         }
 
-        const teachingItems: MenuItem[] = [
-            {
-                key: 'education-home',
-                label: '智能体教学',
-                icon: <EducationIcon className="h-5 w-5" />,
-                to: '/education'
-            }
-        ];
+        // 课堂入口在工作台无需展示，保留知识库/数据集入口
+        const teachingItems: MenuItem[] = [];
 
         if (isMenu('knowledge')) {
             teachingItems.push({
@@ -242,7 +236,7 @@ export default function MainLayout() {
         if (teachingItems.length) {
             groups.push({
                 key: 'education',
-                title: '智能体教学',
+                title: t('menu.knowledge'),
                 items: teachingItems
             });
         }
