@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '~/hooks';
 import { EducationProvider } from './context/EducationContext';
@@ -7,6 +7,9 @@ import { EducationErrorBoundary } from './components/ErrorBoundary';
 export default function EducationLayout() {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  // 添加初始化状态，用于防止闪烁
+  const [isInitializing, setIsInitializing] = useState(true);
+  const initRef = useRef(false);
 
   // 尝试从平台前端获取token
   const tryGetPlatformToken = () => {
@@ -55,54 +58,71 @@ export default function EducationLayout() {
     navigate('/education', { replace: true });
   };
 
+  // 初始化检查 - 只在组件首次挂载时执行一次
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
+    // 检查 URL 参数中是否有认证信息（跨域传递场景）
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('auth_token');
+    
+    // 检查本地存储中是否有认证信息
+    const wsToken = localStorage.getItem('ws_token');
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    console.log('🔧 EducationLayout: 初始化检查', { 
+      isAuthenticated, 
+      hasToken: !!(token || wsToken),
+      hasUrlToken: !!urlToken,
+      hasUser: !!user
+    });
+
+    // 如果 URL 中有认证信息，等待 AuthContext 处理完成
+    if (urlToken) {
+      console.log('🔧 EducationLayout: 检测到URL认证参数，等待AuthContext处理');
+      // 给 AuthContext 足够时间处理 URL 参数
+      const timer = setTimeout(() => {
+        setIsInitializing(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+
+    // 如果本地有完整的认证信息，等待 AuthContext 完成初始化
+    if ((token || wsToken) && user) {
+      // 给 AuthContext 一点时间来恢复状态
+      const timer = setTimeout(() => {
+        setIsInitializing(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    
+    // 如果没有认证信息，直接结束初始化
+    setIsInitializing(false);
+  }, []);
+
+  // 处理认证状态变化
+  useEffect(() => {
+    // 如果还在初始化中，不执行任何操作
+    if (isInitializing) return;
+
     const pendingRedirect = localStorage.getItem('pendingEducationRedirect');
     if (isAuthenticated && pendingRedirect) {
       localStorage.removeItem('pendingEducationRedirect');
       navigate('/education', { replace: true });
     }
-    
-    // 强制检查和设置认证状态
-    const wsToken = localStorage.getItem('ws_token');
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    const demoMode = localStorage.getItem('educationDemoMode');
-    
-    console.log('🔧 EducationLayout: 认证检查', { 
-      isAuthenticated, 
-      hasToken: !!(token || wsToken), 
-      hasUser: !!user, 
-      demoMode 
-    });
-    
-    // 如果有认证数据但认证状态为false，强制设置
-    if (isAuthenticated === false && (token || wsToken) && user && demoMode === 'true') {
-      console.log('🔧 EducationLayout: 强制设置认证状态');
-      setTestToken();
-      return;
-    }
-    
-    // 如果未认证，尝试从平台获取token或自动设置测试token
-    if (isAuthenticated === false) {
-      // 如果有平台token但没有客户端token，自动同步
-      if (wsToken && !token) {
-        localStorage.setItem('token', wsToken);
-        window.dispatchEvent(new CustomEvent('tokenUpdated', { detail: wsToken }));
-        // 延迟刷新，让事件处理完成
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
-      } 
-      // 如果没有任何token，自动设置测试token（开发环境）
-      else if (!wsToken && !token) {
-        console.log('🔧 EducationLayout: 未找到认证token，自动设置测试token');
-        setTestToken();
-      }
-    }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isInitializing, navigate]);
 
-  // 如果认证状态还未初始化，显示加载状态
-  if (isAuthenticated === undefined) {
+  // 当认证状态确定后，更新初始化状态
+  useEffect(() => {
+    if (isAuthenticated) {
+      setIsInitializing(false);
+    }
+  }, [isAuthenticated]);
+
+  // 如果正在初始化，显示加载状态（防止闪烁）
+  if (isInitializing) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-b from-[#F4F8FF] to-white">
         <div className="text-center">
