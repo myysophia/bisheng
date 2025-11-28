@@ -114,21 +114,6 @@ export default function NewChat({
           <img className='size-[18px] grayscale' src={__APP_ENV__.BASE_URL + '/assets/chat2.png'} alt="" />
           <span className="text-sm pl-2.5">{localize('com_ui_new_chat')}</span>
         </button>
-        
-        {/* 教学中心btn */}
-        <button
-          className="flex items-center w-full shadow-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white mx-auto border px-4 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all"
-          onClick={() => {
-            localStorage.setItem('pendingEducationRedirect', 'true');
-            localStorage.setItem('educationDemoMode', 'true');
-            navigate('/education');
-            toggleNav();
-          }}
-          aria-label="智能体教学中心"
-        >
-          <span className="text-lg mr-2">🎓</span>
-          <span className="text-sm">智能体教学</span>
-        </button>
       </div>
       {subHeaders != null ? subHeaders : null}
     </div>
