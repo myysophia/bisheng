@@ -57,10 +57,12 @@ export default function MainLayout() {
     const { user, setUser } = useContext(userContext);
     const { language, options, changLanguage, t } = useLanguage(user)
     const [collapsed, setCollapsed] = useState(false)
+    // 优化后的侧边栏样式
     const sidebarWidthClass = collapsed ? "w-[72px] min-w-[72px] px-2" : "w-[200px] min-w-[200px] px-3"
-    const navBaseClass = "navlink inline-flex items-center rounded-lg w-full hover:bg-nav-hover h-10 mb-1"
-    const navPaddingClass = collapsed ? "justify-center px-2" : "px-3"
-    const navTextClass = collapsed ? "hidden" : "ml-3 text-sm font-normal whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]"
+    const navBaseClass = "navlink group inline-flex items-center rounded-lg w-full h-9 transition-all duration-200 hover:translate-x-0.5"
+    const navPaddingClass = collapsed ? "justify-center px-2" : "gap-2.5 px-3"
+    const navTextClass = collapsed ? "hidden" : "text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+    const navHoverClass = "hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
     const toggleSidebar = () => setCollapsed(prev => !prev)
     const toggleLabel = collapsed ? t('menu.expandSidebar') : t('menu.collapseSidebar')
 
@@ -345,54 +347,54 @@ export default function MainLayout() {
 
     return <div className="flex">
         <div className="bg-background-main w-full h-screen">
-            <div className="flex justify-between h-[64px] bg-background-main relative z-[21]">
-                <div className="flex h-9 my-[14px]">
+            <div className="flex justify-between items-center h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 relative z-[21]">
+                <div className="flex items-center">
                     <Link className="inline-block" to='/education'>
                         {/* @ts-ignore */}
-                        <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="w-[104px] ml-[38px] rounded dark:w-[104px]" alt="" />
+                        <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="h-8 rounded" alt="Bisheng" />
                     </Link>
                 </div>
                 <div>
                     <HeaderMenu />
                 </div>
-                <div className="flex w-fit relative z-10">
-                    <div className="flex">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger className="h-8 w-8 bg-header-icon rounded-lg cursor-pointer my-4" onClick={() => setDark(!dark)}>
-                                    <div className="">
-                                        {dark ? (
-                                            <Sun className="side-bar-button-size dark:text-slate-50 mx-auto w-[13px] h-[13px]" />
-                                        ) : (
-                                            <MoonStar className="side-bar-button-size mx-auto w-[17px] h-[17px]" />
-                                        )}
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{t('menu.themeSwitch')}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <Separator className="mx-[4px] dark:bg-[#111111]" orientation="vertical" />
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger className="h-8 w-8 bg-header-icon rounded-lg cursor-pointer my-4" onClick={changLanguage}>
-                                    <div className="">
-                                        {language === 'en'
-                                            ? <EnIcon className="side-bar-button-size dark:text-slate-50 mx-auto w-[19px] h-[19px]" />
-                                            : <Globe className="side-bar-button-size dark:text-slate-50 mx-auto w-[17px] h-[17px]" />}
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{options[language]}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <Separator className="mx-[23px] h-6 border-l my-5 border-[#dddddd]" orientation="vertical" />
-                    </div>
-                    <div className="flex items-center h-7 my-4">
+                <div className="flex items-center gap-3">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger 
+                                className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" 
+                                onClick={() => setDark(!dark)}
+                            >
+                                {dark ? (
+                                    <Sun className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                ) : (
+                                    <MoonStar className="w-4 h-4 text-gray-600" />
+                                )}
+                            </TooltipTrigger>
+                            <TooltipContent><p>{t('menu.themeSwitch')}</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger 
+                                className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" 
+                                onClick={changLanguage}
+                            >
+                                {language === 'en'
+                                    ? <EnIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                    : <span className="text-xs font-medium text-gray-600 dark:text-gray-300">中</span>}
+                            </TooltipTrigger>
+                            <TooltipContent><p>{options[language]}</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <div className="flex items-center gap-2 ml-2">
                         {/* @ts-ignore */}
-                        <img className="h-7 w-7 rounded-2xl mr-4" src={__APP_ENV__.BASE_URL + '/user.png'} alt="" />
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{user.user_name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                        </div>
                         <SelectHover
                             triagger={
-                                <span className="leading-8 text-[14px] mr-8 max-w-40 cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap">
-                                    {user.user_name} <ChevronDown className="inline-block mt-[-2px]" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer flex items-center gap-1 max-w-32 truncate">
+                                    {user.user_name} <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
                                 </span>
                             }>
                             <SelectHoverItem onClick={JumpResetPage}><Lock className="w-4 h-4 mr-1" /><span>{t('menu.changePwd')}</span></SelectHoverItem>
@@ -402,28 +404,28 @@ export default function MainLayout() {
                 </div>
             </div>
             <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
-                <div className={`relative z-10 bg-background-main h-full ${sidebarWidthClass} shadow-x1 flex flex-col`}>
-                    <nav className="flex-1 overflow-y-auto py-2">
+                <div className={`relative z-10 bg-white dark:bg-gray-900 h-full ${sidebarWidthClass} border-r border-gray-100 dark:border-gray-800 flex flex-col transition-all duration-300`}>
+                    <nav className="flex-1 overflow-y-auto py-4">
                         {menuGroups.map(group => {
                             const isExpanded = collapsed ? true : expandedGroups[group.key] ?? true;
                             return (
-                                <div className="mb-4" key={group.key}>
+                                <div className="mb-5" key={group.key}>
                                     {!collapsed ? (
                                         <button
                                             type="button"
-                                            className="flex items-center w-full px-3 py-2 mb-1 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                                            className="flex items-center justify-between w-full px-2 mb-2 group/title"
                                             onClick={() => handleToggleGroup(group.key)}
                                         >
-                                            <span className="flex-1 text-left truncate">{group.title}</span>
-                                            <ChevronDown className={`w-3 h-3 ml-2 shrink-0 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                            <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">{group.title}</span>
+                                            <ChevronDown className={`w-3 h-3 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'}`} />
                                         </button>
                                     ) : (
-                                        <div className="w-full h-px bg-gray-200 dark:bg-gray-700 mb-2"></div>
+                                        <div className="w-8 h-px bg-gradient-to-r from-gray-300 dark:from-gray-600 to-transparent mx-auto mb-3"></div>
                                     )}
                                     {isExpanded && (
-                                        <div className="space-y-0.5">
+                                        <div className="space-y-1">
                                             {group.items.map(item => {
-                                                const iconElement = collapsed ? item.icon : <div className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</div>;
+                                                const iconElement = <div className="w-[18px] h-[18px] flex items-center justify-center shrink-0">{item.icon}</div>;
                                                 const content = (
                                                     <>
                                                         {iconElement}
@@ -438,7 +440,7 @@ export default function MainLayout() {
                                                             href={item.href}
                                                             target={item.target}
                                                             rel={item.target === '_blank' ? "noopener noreferrer" : undefined}
-                                                            className={`${navBaseClass} ${navPaddingClass}`}
+                                                            className={`${navBaseClass} ${navPaddingClass} ${navHoverClass}`}
                                                             onClick={item.onClick}
                                                         >
                                                             {content}
@@ -447,7 +449,15 @@ export default function MainLayout() {
                                                 }
 
                                                 return (
-                                                    <NavLink key={item.key} to={item.to!} className={`${navBaseClass} ${navPaddingClass}`}>
+                                                    <NavLink 
+                                                        key={item.key} 
+                                                        to={item.to!} 
+                                                        className={({ isActive }) => 
+                                                            `${navBaseClass} ${navPaddingClass} ${isActive 
+                                                                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium border-l-[3px] border-blue-600 dark:border-blue-400 rounded-l-none' 
+                                                                : navHoverClass}`
+                                                        }
+                                                    >
                                                         {content}
                                                     </NavLink>
                                                 );
@@ -458,49 +468,24 @@ export default function MainLayout() {
                             );
                         })}
                     </nav>
-                    <div className="pb-4 flex flex-col items-center gap-3">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    className="h-8 w-8 bg-header-icon rounded-lg flex items-center justify-center cursor-pointer"
-                                    onClick={toggleSidebar}
-                                    aria-label={toggleLabel}
-                                >
-                                    {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                                </TooltipTrigger>
-                                <TooltipContent side="right"><p>{toggleLabel}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {!collapsed && !appConfig.noFace && (
-                            <div className="help flex items-center justify-between w-full px-1">
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger className="h-[72px] flex-1 cursor-pointer bg-background-tip rounded-lg hover:bg-[#1b1f23] hover:text-[white] transition-all dark:hover:bg-background-tip-darkhover mx-1">
-                                            <Link className="block" to={"https://github.com/dataelement/bisheng"} target="_blank">
-                                                <GithubIcon className="side-bar-button-size mx-auto w-5 h-5 " />
-                                                <span className="block text-[12px] mt-[8px] font-bold">{t("menu.github")}</span>
-                                            </Link>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{t("menu.github")}</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <Separator className="mx-1 h-10" orientation="vertical" />
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger className="h-[72px] flex-1 cursor-pointer bg-background-tip rounded-lg p-0 align-top hover:bg-[#0055e3] hover:text-[white]  transition-all mx-1">
-                                            <Link className="block m-0 p-0" to={"https://m7a7tqsztt.feishu.cn/wiki/ZxW6wZyAJicX4WkG0NqcWsbynde"} target="_blank">
-                                                <BookOpenIcon className=" mx-auto w-5 h-5" />
-                                                <span className="block text-[12px] mt-[8px] font-bold">{t("menu.bookopen")}</span>
-                                            </Link>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{t('menu.document')}</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        )}
+                    <div className="p-3 border-t border-gray-100 dark:border-gray-800">
+                        <button
+                            onClick={toggleSidebar}
+                            aria-label={toggleLabel}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                        >
+                            {collapsed ? (
+                                <ChevronRight className="w-4 h-4 transition-transform" />
+                            ) : (
+                                <>
+                                    <ChevronLeft className="w-4 h-4 transition-transform" />
+                                    <span className="text-xs font-medium">{toggleLabel}</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
-                <div className="flex-1 bg-background-main-content rounded-lg min-w-0 overflow-y-auto">
+                <div className="flex-1 bg-gray-50 dark:bg-gray-950 min-w-0 overflow-y-auto">
                     <ErrorBoundary
                         onReset={() => window.location.href = window.location.href}
                         FallbackComponent={CrashErrorComponent}
