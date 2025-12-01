@@ -108,9 +108,15 @@ async def workflow_ws(*,
                       workflow_id: str,
                       websocket: WebSocket,
                       chat_id: Optional[str] = None,
+                      t: Optional[str] = None,
                       Authorize: AuthJWT = Depends()):
     try:
-        Authorize.jwt_required(auth_from='websocket', websocket=websocket)
+        # 优先使用前端通过查询参数传递的 token，避免跨域场景 Cookie 丢失导致 422/403
+        if t:
+            Authorize._token = t
+            Authorize.jwt_required(auth_from='websocket', token=t)
+        else:
+            Authorize.jwt_required(auth_from='websocket', websocket=websocket)
         payload = Authorize.get_jwt_subject()
         payload = json.loads(payload)
         login_user = UserPayload(**payload)
