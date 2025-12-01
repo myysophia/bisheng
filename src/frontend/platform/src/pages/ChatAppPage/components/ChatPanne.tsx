@@ -176,12 +176,33 @@ export default function ChatPanne({ customWsHost = '', appendHistory = false, da
     const { appConfig } = useContext(locationContext)
     const token = localStorage.getItem("ws_token") || '';
     const host = appConfig.websocketHost || window.location.host;
-    let wsUrl = type === AppNumType.SKILL ? `${host}${__APP_ENV__.BASE_URL}/api/v1/chat/${id}?type=L1&t=${token}` :
-        type === AppNumType.ASSISTANT ? `${location.host}${__APP_ENV__.BASE_URL}/api/v1/assistant/chat/${id}?t=${token}` :
-            `${host}${__APP_ENV__.BASE_URL}/api/v1/workflow/chat/${id}?t=${token}&chat_id=${chatId}`
+
+    const buildWsUrl = (path: string, params: Record<string, string | undefined>) => {
+        const url = new URL(path, `${window.location.protocol}//${host}`);
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') {
+                url.searchParams.set(k, v);
+            }
+        });
+        // ChatInput 会再拼接协议，这里返回 host+path+query
+        return `${url.host}${url.pathname}${url.search}`;
+    };
+
+    let wsUrl =
+        type === AppNumType.SKILL
+            ? buildWsUrl(`${__APP_ENV__.BASE_URL}/api/v1/chat/${id}`, { type: 'L1', t: token })
+            : type === AppNumType.ASSISTANT
+                ? buildWsUrl(`${__APP_ENV__.BASE_URL}/api/v1/assistant/chat/${id}`, { t: token })
+                : buildWsUrl(`${__APP_ENV__.BASE_URL}/api/v1/workflow/chat/${id}`, {
+                    t: token || undefined,
+                    chat_id: chatId || undefined
+                });
 
     if (customWsHost) {
-        wsUrl = `${host}${__APP_ENV__.BASE_URL}${customWsHost}&t=${token}`
+        // customWsHost 可能已包含查询参数，这里补充 token
+        const url = new URL(`${__APP_ENV__.BASE_URL}${customWsHost}`, `${window.location.protocol}//${host}`);
+        if (token) url.searchParams.set('t', token);
+        wsUrl = `${url.host}${url.pathname}${url.search}`;
     }
 
     // sendmsg user name
