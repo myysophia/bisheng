@@ -75,6 +75,7 @@ export const ChatTest = forwardRef((props, ref) => {
     if (!open) return null;
 
     const host = appConfig.websocketHost || window.location.host;
+    const token = localStorage.getItem("ws_token") || '';
     return (
         <div
             ref={resizableRef}
@@ -99,7 +100,7 @@ export const ChatTest = forwardRef((props, ref) => {
                 </div>
             </div>
             <div className={`h-[calc(100vh-28px)] relative overflow-y-auto ${small ? 'hidden' : ''}`} onKeyDown={(e) => e.stopPropagation()}>
-                <ChatPane debug autoRun chatId={chatId} flow={flow} wsUrl={`${host}${__APP_ENV__.BASE_URL}/api/v1/workflow/chat/${flow?.id}`} />
+                <ChatPane debug autoRun chatId={chatId} flow={flow} wsUrl={`${host}${__APP_ENV__.BASE_URL}/api/v1/workflow/chat/${flow?.id}?t=${token}`} />
             </div>
             {!small && <div
                 className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize flex items-center"
