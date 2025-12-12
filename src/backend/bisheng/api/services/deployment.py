@@ -22,8 +22,8 @@ class GPUStackService(BaseService):
         # 从config.yaml读取GPUStack配置
         gpustack_config = settings.get_from_db("gpustack") or {}
         self.gpustack_url = gpustack_config.get("url", "https://gpustack.agentgo.tech")
-        self.gpustack_username = gpustack_config.get("username") or "admin"
-        self.gpustack_password = gpustack_config.get("password") or "Qwer1234!!!"
+        self.gpustack_username = gpustack_config.get("username", "")
+        self.gpustack_password = gpustack_config.get("password", "")
         self.gpustack_token = gpustack_config.get("token") or ""
 
         modelscope_config = settings.get_from_db("modelscope") or {}
