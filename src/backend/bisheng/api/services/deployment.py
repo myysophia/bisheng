@@ -251,7 +251,7 @@ class GPUStackService(BaseService):
 
             response = await self._make_request(
                 "GET",
-                "/v1/model-instances",
+                "/v2/model-instances",
                 params=params
             )
             
@@ -337,7 +337,7 @@ class GPUStackService(BaseService):
 
             model_response = await self._make_request(
                 "POST",
-                "/v1/models",
+                "/v2/models",
                 json=cleaned_payload
             )
 
@@ -372,12 +372,12 @@ class GPUStackService(BaseService):
 
             model_response = await self._make_request(
                 "GET",
-                f"/v1/models/{model_id}"
+                f"/v2/models/{model_id}"
             )
 
             instances_response = await self._make_request(
                 "GET",
-                f"/v1/models/{model_id}/instances"
+                f"/v2/models/{model_id}/instances"
             )
 
             deployment = self._convert_to_deployment(model_response)
@@ -422,7 +422,7 @@ class GPUStackService(BaseService):
             
             response = await self._make_request(
                 "PUT",
-                f"/v1/models/{model_id}",
+                f"/v2/models/{model_id}",
                 json=payload
             )
             
@@ -442,7 +442,7 @@ class GPUStackService(BaseService):
         """
         model_response = await self._make_request(
             "GET",
-            f"/v1/models/{model_id}"
+            f"/v2/models/{model_id}"
         )
 
         if not isinstance(model_response, dict):
@@ -541,7 +541,7 @@ class GPUStackService(BaseService):
             model_id = await self._resolve_model_id(deployment_id)
             await self._make_request(
                 "DELETE",
-                f"/v1/models/{model_id}"
+                f"/v2/models/{model_id}"
             )
         except Exception as e:
             logger.error(f"Failed to delete deployment: {str(e)}")
@@ -559,7 +559,7 @@ class GPUStackService(BaseService):
             payload = await self._build_model_update_payload(model_id, {"replicas": 1})
             response = await self._make_request(
                 "PUT",
-                f"/v1/models/{model_id}",
+                f"/v2/models/{model_id}",
                 json=payload
             )
             
@@ -581,7 +581,7 @@ class GPUStackService(BaseService):
             payload = await self._build_model_update_payload(model_id, {"replicas": 0})
             response = await self._make_request(
                 "PUT",
-                f"/v1/models/{model_id}",
+                f"/v2/models/{model_id}",
                 json=payload
             )
             
@@ -601,7 +601,7 @@ class GPUStackService(BaseService):
             model_id = await self._resolve_model_id(deployment_id)
             response = await self._make_request(
                 "GET",
-                f"/v1/models/{model_id}/instances"
+                f"/v2/models/{model_id}/instances"
             )
             
             return self._convert_instances(response.get("items", []))
@@ -622,7 +622,7 @@ class GPUStackService(BaseService):
             model_id = await self._resolve_model_id(deployment_id)
             response = await self._make_request(
                 "GET",
-                "/v1/dashboard",
+                "/v2/dashboard",
                 params={"model_id": model_id}
             )
             
@@ -660,7 +660,7 @@ class GPUStackService(BaseService):
 
             response = await self._make_request(
                 "GET",
-                f"/v1/model-instances/{target_instance_id}/logs",
+                f"/v2/model-instances/{target_instance_id}/logs",
                 params={"tail": lines, "follow": False}
             )
 
@@ -687,13 +687,13 @@ class GPUStackService(BaseService):
             # 获取GPU设备列表
             gpu_response = await self._make_request(
                 "GET",
-                "/v1/gpu-devices"
+                "/v2/gpu-devices"
             )
             
             # 获取Worker列表
             worker_response = await self._make_request(
                 "GET",
-                "/v1/workers"
+                "/v2/workers"
             )
             
             # 统计可用资源
@@ -727,7 +727,7 @@ class GPUStackService(BaseService):
         try:
             response = await self._make_request(
                 "GET",
-                "/v1/workers",
+                "/v2/workers",
                 params=params or None,
             )
             return response
@@ -740,7 +740,7 @@ class GPUStackService(BaseService):
         try:
             response = await self._make_request(
                 "GET",
-                "/v1/gpu-devices",
+                "/v2/gpu-devices",
                 params=params or None,
             )
             return response
@@ -757,7 +757,7 @@ class GPUStackService(BaseService):
             try:
                 model_sets = await self._make_request(
                     "GET",
-                    "/v1/model-sets"
+                    "/v2/model-sets"
                 )
                 
                 for model_set in model_sets.get("items", []):
@@ -774,7 +774,7 @@ class GPUStackService(BaseService):
             try:
                 models = await self._make_request(
                     "GET",
-                    "/v1/models"
+                    "/v2/models"
                 )
                 
                 for model in models.get("items", []):
@@ -1219,7 +1219,7 @@ class GPUStackService(BaseService):
             
             response = await self._make_request(
                 "POST",
-                "/v1/model-evaluations",
+                "/v2/model-evaluations",
                 json=payload
             )
 
@@ -1287,7 +1287,7 @@ class GPUStackService(BaseService):
             try:
                 response = await self._make_request(
                     "GET",
-                    f"/v1/models/{model_id}"
+                    f"/v2/models/{model_id}"
                 )
                 
                 ready_replicas = response.get("ready_replicas", 0)
@@ -1377,12 +1377,12 @@ class GPUStackService(BaseService):
     async def _resolve_model_id(self, deployment_id: str) -> str:
         """根据部署ID解析模型ID，兼容传入实例ID的情况"""
         try:
-            await self._make_request("GET", f"/v1/models/{deployment_id}")
+            await self._make_request("GET", f"/v2/models/{deployment_id}")
             return str(deployment_id)
         except Exception:
             instance_response = await self._make_request(
                 "GET",
-                f"/v1/model-instances/{deployment_id}"
+                f"/v2/model-instances/{deployment_id}"
             )
             model_id = instance_response.get("model_id")
             if model_id is None:
