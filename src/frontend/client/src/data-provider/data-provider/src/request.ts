@@ -3,6 +3,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import * as endpoints from './api-endpoints';
 import { setTokenHeader } from './headers-helpers';
 import type * as t from './types';
+import { buildPlatformLoginUrl } from '~/utils/platform';
 
 
 const customAxios = axios.create({
@@ -140,12 +141,13 @@ customAxios.interceptors.response.use(
       sessionStorage.setItem('auth_redirecting', 'true');
       
       // 跳转到主平台登录页面
-      const bishengHost = __APP_ENV__.BISHENG_HOST || '';
-      const redirectPath = bishengHost ? `/${bishengHost}` : '/';
-      console.log('跳转到主平台登录:', `${location.origin}${redirectPath}?from=workspace`);
-      
+      const loginUrl = buildPlatformLoginUrl(window.location.href);
+      console.log('跳转到主平台登录:', loginUrl);
+
       setTimeout(() => {
-        location.href = `${location.origin}${redirectPath}?from=workspace`;
+        if (loginUrl) {
+          location.href = loginUrl;
+        }
       }, 100);
       // } else {
       //   if (location.pathname.indexOf('login') === -1) {

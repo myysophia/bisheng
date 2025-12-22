@@ -214,14 +214,16 @@ export default function MainLayout() {
             });
         }
 
-        const teachingItems: MenuItem[] = [
-            {
+        const teachingItems: MenuItem[] = [];
+
+        if (isMenu('education')) {
+            teachingItems.push({
                 key: 'education-home',
                 label: '智能体教学',
                 icon: <EducationIcon className="h-5 w-5" />,
                 to: '/education'
-            }
-        ];
+            });
+        }
 
         if (isMenu('knowledge')) {
             teachingItems.push({

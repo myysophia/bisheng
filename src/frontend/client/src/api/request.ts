@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { buildPlatformLoginUrl } from '~/utils/platform';
 
 
 const customAxios = axios.create({
@@ -159,10 +160,19 @@ customAxios.interceptors.response.use(
       console.warn('401 error, refreshing token');
       originalRequest._retry = true;
 
-      const isEducationDemo = localStorage.getItem('educationDemoMode') === 'true';
+      const isRedirecting = sessionStorage.getItem('auth_redirecting');
 
-      if (import.meta.env.MODE === 'production' && !isEducationDemo) {
-        location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`
+      if (isRedirecting) {
+        console.error('检测到重定向循环，停止重定向');
+        return Promise.reject(error);
+      }
+
+      if (import.meta.env.MODE === 'production') {
+        sessionStorage.setItem('auth_redirecting', 'true');
+        const loginUrl = buildPlatformLoginUrl(window.location.href);
+        if (loginUrl) {
+          location.href = loginUrl;
+        }
       }
       // } else {
       //   if (location.pathname.indexOf('login') === -1) {

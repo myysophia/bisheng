@@ -19,14 +19,6 @@ import Search from './Search';
 import Root from './Root';
 import Sop from '~/components/Sop';
 import WebView from '~/components/WebView';
-import EducationLayout from './Education';
-import EducationCenter from './Education/pages/EducationCenter';
-import CourseDetail from './Education/pages/CourseDetail';
-import ChapterLearning from './Education/pages/ChapterLearning';
-import ProgressPage from './Education/pages/ProgressPage';
-import PracticeEnvironment from './Education/pages/PracticeEnvironment';
-import GuidedBuilder from './Education/pages/GuidedBuilder';
-import CreationSuccess from './Education/pages/CreationSuccess';
 
 const AuthLayout = () => (
   <AuthContextProvider>
@@ -110,41 +102,6 @@ export const router = createBrowserRouter([
           //   path: 'search',
           //   element: <Search />,
           // },
-        ],
-      },
-      // 教育模块路由
-      {
-        path: '/education',
-        element: <EducationLayout />,
-        children: [
-          {
-            index: true,
-            element: <EducationCenter />,
-          },
-          {
-            path: 'courses/:courseId',
-            element: <CourseDetail />,
-          },
-          {
-            path: 'courses/:courseId/chapters/:chapterId',
-            element: <ChapterLearning />,
-          },
-          {
-            path: 'progress',
-            element: <ProgressPage />,
-          },
-          {
-            path: 'practice',
-            element: <PracticeEnvironment />,
-          },
-          {
-            path: 'guided-builder',
-            element: <GuidedBuilder />,
-          },
-          {
-            path: 'success',
-            element: <CreationSuccess />,
-          },
         ],
       },
     ],

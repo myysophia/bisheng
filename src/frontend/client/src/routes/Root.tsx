@@ -28,20 +28,6 @@ export default function Root() {
   const fileMap = useFileMap({ isAuthenticated });
   const search = useSearch({ isAuthenticated });
 
-  useEffect(() => {
-    const pendingEducation = localStorage.getItem('pendingEducationRedirect');
-    if (!pendingEducation) {
-      return;
-    }
-
-    if (location.pathname === '/education' || location.pathname.endsWith('/education')) {
-      localStorage.removeItem('pendingEducationRedirect');
-      return;
-    }
-
-    navigate('/education', { replace: true });
-  }, [location.pathname, navigate]);
-
   if (!isAuthenticated) {
     return null;
   }

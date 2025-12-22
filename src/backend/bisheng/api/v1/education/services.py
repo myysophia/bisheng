@@ -60,11 +60,13 @@ class CourseService:
         chapter_infos = []
         for chapter in chapters:
             progress = user_progress_map.get(chapter.id)
+            chapter_duration = getattr(chapter, "duration", None) or 0
+            chapter_video_url = getattr(chapter, "video_url", "") or ""
             chapter_info = ChapterInfo(
                 id=chapter.id,
                 title=chapter.title,
-                duration=chapter.duration or 0,
-                video_url=chapter.video_url or "",
+                duration=chapter_duration,
+                video_url=chapter_video_url,
                 order=chapter.order_index,
                 completed=progress.completed if progress else False,
                 progress=progress.progress if progress else 0.0
@@ -100,7 +102,8 @@ class VideoService:
         last_position = progress.last_position if progress else 0
         
         # Process video URL - ensure it's a complete CDN URL
-        video_url = chapter.video_url or ""
+        chapter_duration = getattr(chapter, "duration", None) or 0
+        video_url = getattr(chapter, "video_url", "") or ""
         if video_url and not video_url.startswith(('http://', 'https://')):
             # If it's a relative path, prepend CDN base URL
             import os
@@ -109,7 +112,7 @@ class VideoService:
         
         return VideoInfoResponse(
             video_url=video_url,
-            duration=chapter.duration or 0,
+            duration=chapter_duration,
             last_position=last_position
         )
 
@@ -137,9 +140,10 @@ class VideoService:
             previous_learning_time = existing_progress.learning_time if existing_progress else 0
             
             # Calculate progress percentage
+            chapter_duration = getattr(chapter, "duration", None) or 0
             progress_percentage = 0.0
-            if chapter.duration and chapter.duration > 0:
-                progress_percentage = min(position / chapter.duration, 1.0)
+            if chapter_duration > 0:
+                progress_percentage = min(position / chapter_duration, 1.0)
             
             # Auto-detect completion if not explicitly set
             # Consider completed if user watched 90% or more of the video
@@ -276,7 +280,8 @@ class ProgressService:
             
             # Get existing progress to preserve learning time
             existing_progress = UserProgressDao.get_user_progress(user_id, chapter_id)
-            learning_time = existing_progress.learning_time if existing_progress else chapter.duration or 0
+            chapter_duration = getattr(chapter, "duration", None) or 0
+            learning_time = existing_progress.learning_time if existing_progress else chapter_duration
             
             # Create or update progress as completed
             progress = UserProgress(
@@ -284,7 +289,7 @@ class ProgressService:
                 course_id=chapter.course_id,
                 chapter_id=chapter_id,
                 progress=1.0,
-                last_position=chapter.duration or 0,
+                last_position=chapter_duration,
                 completed=True,
                 learning_time=learning_time
             )

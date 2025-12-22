@@ -47,18 +47,6 @@ export default defineConfig({
           return newPath;
         },
       },
-      // 添加教育API的特殊代理规则
-      '/workspace/api/education': {
-        target: 'http://localhost:7860',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => {
-          console.log('Education API - Original path:', path);
-          const newPath = path.replace(/^\/workspace\/api\/education/, '/api/education');
-          console.log('Education API - Rewritten path:', newPath);
-          return newPath;
-        },
-      },
       '/workspace/tmp-dir': {
         target: 'http://192.168.106.120:3002',
         changeOrigin: true,

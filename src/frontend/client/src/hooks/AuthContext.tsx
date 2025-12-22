@@ -22,6 +22,7 @@ import {
 import { TAuthConfig, TUserContext, TAuthContext, TResError } from '~/common';
 import useTimeout from './useTimeout';
 import store from '~/store';
+import { buildPlatformLoginUrl } from '~/utils/platform';
 
 const AuthContext = createContext<TAuthContext | undefined>(undefined);
 
@@ -134,14 +135,22 @@ const AuthContextProvider = ({
       }
     } else {
       console.log('⚠️ AuthContext: 缺少认证数据', { hasToken: !!storedToken, hasUser: !!storedUser });
-      // 即使没有完整的本地认证信息，也需要清理残留的重定向状态，防止后续401无法自动跳转
-      clearRedirectFlag();
     }
   }, []);
 
   useEffect(() => {
     setUserContext({ token, isAuthenticated: !!user, user });
   }, [user])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    const redirecting = sessionStorage.getItem('auth_redirecting');
+    if (redirecting) {
+      sessionStorage.removeItem('auth_redirecting');
+    }
+  }, [isAuthenticated]);
 
   const navigate = useNavigate();
   const { data: bsConfig } = useGetBsConfig()
@@ -189,20 +198,22 @@ const AuthContextProvider = ({
   });
   const logoutUser = useLogoutUserMutation({
     onSuccess: (data) => {
+      const redirectUrl = buildPlatformLoginUrl();
       setUserContext({
         token: undefined,
         isAuthenticated: false,
         // user: undefined,
-        redirect: `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace` // data.redirect ?? bsConfig?.host,
+        redirect: redirectUrl || bsConfig?.host, // data.redirect ?? bsConfig?.host,
       });
     },
     onError: (error) => {
       doSetError((error as Error).message);
+      const redirectUrl = buildPlatformLoginUrl();
       setUserContext({
         token: undefined,
         isAuthenticated: false,
         user: undefined,
-        redirect: bsConfig?.host,
+        redirect: redirectUrl || bsConfig?.host,
       });
     },
   });
@@ -250,8 +261,19 @@ const AuthContextProvider = ({
     } else if (userQuery.isError) {
       doSetError((userQuery.error as Error).message);
       // 如果没有认证信息，跳转到主平台登录
-      if (!isAuthenticated) {
-        window.location.href = `${location.origin}/${__APP_ENV__.BISHENG_HOST}?from=workspace`;
+      const hasStoredAuth = !!(
+        (localStorage.getItem('token') || localStorage.getItem('ws_token')) &&
+        localStorage.getItem('user')
+      );
+      if (!isAuthenticated && !hasStoredAuth) {
+        const isRedirecting = sessionStorage.getItem('auth_redirecting');
+        if (!isRedirecting) {
+          sessionStorage.setItem('auth_redirecting', 'true');
+          const loginUrl = buildPlatformLoginUrl(window.location.href);
+          if (loginUrl) {
+            window.location.href = loginUrl;
+          }
+        }
       }
     }
     if (error != null && error && isAuthenticated) {

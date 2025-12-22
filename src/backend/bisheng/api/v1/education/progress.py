@@ -70,8 +70,8 @@ async def mark_chapter_complete(
     Returns information about next chapter unlock and course progress.
     """
     try:
-        # Validate and log access - user can only mark their own progress
-        EducationAuthMiddleware.validate_and_log_access(login_user, "POST /progress/chapters/{chapter_id}/complete", chapter_id)
+        # 章节进度由服务层按用户 ID 处理，仅记录访问
+        EducationAuthMiddleware.log_access(login_user, "POST /progress/chapters/{chapter_id}/complete", chapter_id)
         
         # Validate chapter_id parameter
         if not chapter_id or not isinstance(chapter_id, str):

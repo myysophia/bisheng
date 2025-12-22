@@ -49,9 +49,8 @@ class ChapterBase(SQLModelSerializable):
         sa_column=Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     )
     
-    # 临时注释掉数据库中不存在的字段
-    # video_url: Optional[str] = Field(default=None, max_length=500)
-    # duration: Optional[int] = Field(default=None)  # 时长(秒)
+    video_url: Optional[str] = Field(default=None, max_length=500)
+    duration: Optional[int] = Field(default=None)  # 时长(秒)
 
 
 class Chapter(ChapterBase, table=True):

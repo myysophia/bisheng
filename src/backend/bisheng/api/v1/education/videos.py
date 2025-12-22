@@ -30,8 +30,8 @@ async def get_video_info(
     - last_position: User's last watching position in seconds
     """
     try:
-        # Validate and log access - user can only access their own video progress
-        EducationAuthMiddleware.validate_and_log_access(login_user, "GET /videos/{chapter_id}", chapter_id)
+        # 视频资源不按用户 ID 进行资源授权校验，仅记录访问即可
+        EducationAuthMiddleware.log_access(login_user, "GET /videos/{chapter_id}", chapter_id)
         
         # Validate chapter_id parameter
         if not chapter_id or not isinstance(chapter_id, str):
@@ -73,8 +73,8 @@ async def update_video_progress(
     Tracks learning time and supports resume functionality.
     """
     try:
-        # Validate and log access - user can only update their own progress
-        EducationAuthMiddleware.validate_and_log_access(login_user, "POST /videos/{chapter_id}/progress", chapter_id)
+        # 进度写入会在服务层按用户 ID 处理，不使用资源用户 ID 校验
+        EducationAuthMiddleware.log_access(login_user, "POST /videos/{chapter_id}/progress", chapter_id)
         
         # Validate input parameters
         if not chapter_id or not isinstance(chapter_id, str):

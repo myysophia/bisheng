@@ -177,6 +177,33 @@ export const LoginPage = () => {
                 // 总是保存 token，后续请求统一通过 Authorization 头携带，避免跨域 Cookie 带来的 401
                 localStorage.setItem('ws_token', res.access_token)
                 localStorage.setItem('isLogin', '1')
+                const userInfo = {
+                    user_id: res.user_id,
+                    user_name: res.user_name,
+                    role: res.role
+                };
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+                const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+                if (redirectParam) {
+                    try {
+                        const decoded = decodeURIComponent(redirectParam);
+                        const targetUrl = new URL(decoded, window.location.origin);
+                        const isSafeHost = targetUrl.hostname === window.location.hostname;
+
+                        if (isSafeHost) {
+                            if (targetUrl.origin !== window.location.origin) {
+                                targetUrl.searchParams.set('auth_token', res.access_token);
+                                targetUrl.searchParams.set('auth_user', encodeURIComponent(JSON.stringify(userInfo)));
+                            }
+                            location.href = targetUrl.toString();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('解析重定向地址失败:', error);
+                    }
+                }
+
                 // const path = location.href.indexOf('from=workspace') === -1 ? '' : '/workspace'
                 location.href = location.pathname === '/' ? location.origin + '/workspace/' : location.href
                 // location.href = __APP_ENV__.BASE_URL + '/'

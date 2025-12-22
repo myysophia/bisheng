@@ -1,22 +1,29 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '~/hooks';
+import { buildPlatformLoginUrl } from '~/utils/platform';
 
 export default function useAuthRedirect() {
   const { user, isAuthenticated } = useAuthContext();
-  const navigate = useNavigate();
-
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isAuthenticated) {
-        navigate(`/${__APP_ENV__.BISHENG_HOST}/login`, { replace: true });
+        const isRedirecting = sessionStorage.getItem('auth_redirecting');
+        if (isRedirecting) {
+          return;
+        }
+
+        sessionStorage.setItem('auth_redirecting', 'true');
+        const loginUrl = buildPlatformLoginUrl(window.location.href);
+        if (loginUrl) {
+          window.location.href = loginUrl;
+        }
       }
     }, 300);
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
   return {
     user,

@@ -38,7 +38,14 @@ import Page403 from "./pages/Page403";
 import Report from "./pages/Report";
 import SystemPage from "./pages/SystemPage";
 import ResoucePage from "./pages/resoucePage";
+import EducationLayout from "./pages/EducationPage/EducationLayout";
 import EducationPage from "./pages/EducationPage";
+import CourseDetail from "./pages/EducationPage/CourseDetail";
+import ChapterLearning from "./pages/EducationPage/ChapterLearning";
+import ProgressPage from "./pages/EducationPage/ProgressPage";
+import PracticeEnvironment from "./pages/EducationPage/PracticeEnvironment";
+import GuidedBuilder from "./pages/EducationPage/GuidedBuilder";
+import CreationSuccess from "./pages/EducationPage/CreationSuccess";
 import { AppNumType } from "./types/app";
 
 // react 与 react router dom版本不匹配
@@ -115,7 +122,20 @@ const privateRouter = [
       { path: "evaluation", element: <EvaluatingPage /> },
       { path: "evaluation/create", element: <EvaluatingCreate /> },
       { path: "dataset", element: <DataSetPage /> },
-      { path: "education", element: <EducationPage /> },
+      {
+        path: "education",
+        element: <EducationLayout />,
+        permission: 'education',
+        children: [
+          { index: true, element: <EducationPage /> },
+          { path: "courses/:courseId", element: <CourseDetail /> },
+          { path: "courses/:courseId/chapters/:chapterId", element: <ChapterLearning /> },
+          { path: "progress", element: <ProgressPage /> },
+          { path: "practice", element: <PracticeEnvironment /> },
+          { path: "guided-builder", element: <GuidedBuilder /> },
+          { path: "success", element: <CreationSuccess /> },
+        ],
+      },
       { path: "label", element: <LabelPage /> },
       { path: "label/:id", element: <TaskApps /> },
       { path: "label/chat/:id/:fid/:cid/:type", element: <TaskAppChats /> },

@@ -302,3 +302,5 @@ src/frontend/client/test-education-frontend.cjs
 src/frontend/client/test-education-frontend.js
 src/frontend/client/validate-components.cjs
 src/frontend/platform/src/pages/SkillChatPage.tsx
+
+.codex_local

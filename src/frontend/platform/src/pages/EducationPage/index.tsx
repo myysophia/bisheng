@@ -1,76 +1,22 @@
-import React, { useState, useEffect, useMemo, useContext } from 'react';
-import { BookOpen, Clock, Users, Star, TrendingUp, Award, Play, Target, BarChart3, Trophy } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { BookOpen, Bot, Clock, Users, Star, Play, Target, BarChart3 } from 'lucide-react';
+import { Badge } from '@/components/bs-ui/badge';
 import { Button } from '@/components/bs-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/bs-ui/card';
-import { useTranslation } from 'react-i18next';
 import { educationAPI } from '@/controllers/API/education';
-import { captureAndAlertRequestErrorHoc } from '@/controllers/request';
-import { locationContext } from '@/contexts/locationContext';
-import { resolveWorkspaceUrl, buildWorkspaceLink } from '@/util/workspace';
+import { useNavigate } from 'react-router-dom';
+import type { Course, LearningStats } from './types';
+import { EducationLoading } from './components/StateCard';
 
-// 课程数据接口定义
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  category: 'theory' | 'practice';
-  duration: number;
-  instructor?: string;
-  rating?: number;
-  studentsCount?: number;
-  tags?: string[];
-  chapters?: number;
-  progress?: number;
-  thumbnail?: string;
-}
-
-interface LearningStats {
-  total_courses: number;
-  total_students: number;
-  average_rating: number;
-  total_duration: number;
-}
-
-const learningPaths = [
-  {
-    id: 'path-beginner',
-    title: '入门学习路径',
-    description: '适合零基础学员，从基础概念开始系统学习',
-    courses: ['course-1'],
-    estimatedTime: '1-2周',
-    difficulty: 'beginner',
-    icon: '🌱',
-  },
-  {
-    id: 'path-intermediate',
-    title: '进阶学习路径',
-    description: '适合有一定基础的学员，深入学习高级技术',
-    courses: ['course-1', 'course-2'],
-    estimatedTime: '2-3周',
-    difficulty: 'intermediate',
-    icon: '🚀',
-  },
-  {
-    id: 'path-advanced',
-    title: '实战学习路径',
-    description: '适合希望通过项目实践提升技能的学员',
-    courses: ['course-1', 'course-2', 'course-3'],
-    estimatedTime: '4-6周',
-    difficulty: 'advanced',
-    icon: '🎯',
-  },
-];
-
-const achievements = [
-  { id: 'first-course', title: '初学者', description: '完成第一门课程', icon: '🎓' },
-  { id: 'speed-learner', title: '学习达人', description: '一周内完成3门课程', icon: '⚡' },
-  { id: 'perfect-score', title: '完美主义者', description: '作业获得满分', icon: '💯' },
-  { id: 'practice-master', title: '实践大师', description: '完成所有实战项目', icon: '🏆' },
-];
+const levelLabels: Record<Course['level'], string> = {
+  beginner: '入门',
+  intermediate: '进阶',
+  advanced: '实战',
+};
 
 export default function EducationPage() {
-  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const courseSectionRef = useRef<HTMLDivElement | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -81,18 +27,6 @@ export default function EducationPage() {
     average_rating: 0,
     total_duration: 0
   });
-  const { appConfig } = useContext(locationContext);
-
-  const workspaceBase = useMemo(() => resolveWorkspaceUrl(appConfig.workspaceUrl), [appConfig.workspaceUrl]);
-  const openClientPage = (relativePath: string, target: '_self' | '_blank' = '_self') => {
-    if (typeof window === 'undefined') return;
-    const url = buildWorkspaceLink(workspaceBase, relativePath);
-    if (target === '_self') {
-      window.location.href = url;
-    } else {
-      window.open(url, target, 'noopener');
-    }
-  };
 
   // 加载课程数据
   const loadCourses = async () => {
@@ -144,90 +78,92 @@ export default function EducationPage() {
   const filteredCourses = courses;
 
   const handleCourseClick = (courseId: string) => {
-    openClientPage(`/education/courses/${courseId}`);
+    navigate(`/education/courses/${courseId}`);
   };
 
   const handleStartLearning = () => {
-    openClientPage('/education');
+    const firstCourse = courses[0];
+    if (firstCourse) {
+      navigate(`/education/courses/${firstCourse.id}`);
+      return;
+    }
+    courseSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <EducationLoading message="正在加载课程数据..." />;
   }
 
   return (
-    <div className="education-page h-full overflow-y-auto">
-      <div className="p-6 space-y-8 max-w-7xl mx-auto">
-      {/* 头部横幅 */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <BookOpen className="w-8 h-8 text-white" />
+    <div className="education-page h-full overflow-y-auto bg-background">
+      <div className="p-3 space-y-4 max-w-6xl mx-auto">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <BookOpen className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">智能体教学中心</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  从零开始，掌握智能体开发技能，成为 AI 时代的技术专家
+                </p>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-[11px] px-2 py-0.5">平台内教学</Badge>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              智能体教学中心
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              从零开始，掌握智能体开发技能，成为AI时代的技术专家
-            </p>
-          </div>
+
+          <Card>
+            <CardContent className="p-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <div className="text-xl font-semibold text-foreground">{learningStats.total_courses}</div>
+                <div className="text-[11px] text-muted-foreground">精品课程</div>
+              </div>
+              <div>
+                <div className="text-xl font-semibold text-foreground">{learningStats.total_students.toLocaleString()}</div>
+                <div className="text-[11px] text-muted-foreground">学习人数</div>
+              </div>
+              <div>
+                <div className="text-xl font-semibold text-foreground">{learningStats.average_rating}</div>
+                <div className="text-[11px] text-muted-foreground">平均评分</div>
+              </div>
+              <div>
+                <div className="text-xl font-semibold text-foreground">{learningStats.total_duration}</div>
+                <div className="text-[11px] text-muted-foreground">总时长(分钟)</div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* 统计数据 */}
-        <div className="flex justify-center gap-8 mt-8">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{learningStats.total_courses}</div>
-            <div className="text-sm text-muted-foreground">精品课程</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{learningStats.total_students.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">学习人数</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{learningStats.average_rating}</div>
-            <div className="text-sm text-muted-foreground">平均评分</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{learningStats.total_duration}</div>
-            <div className="text-sm text-muted-foreground">总时长(分钟)</div>
-          </div>
-        </div>
-      </div>
 
       {/* 快速入口 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Play className="w-5 h-5 text-primary" />
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Play className="w-4 h-4 text-primary" />
             快速开始
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
+        <CardContent className="pt-0 pb-4">
+          <div className="flex flex-col lg:flex-row gap-3">
             <Button 
-              onClick={() => openClientPage('/education')}
-              className="flex-1"
+              onClick={handleStartLearning}
+              className="flex-1 h-9 text-sm"
             >
               <BookOpen className="w-4 h-4 mr-2" />
               进入教学界面
             </Button>
             <Button 
               variant="outline"
-              onClick={() => openClientPage('/education/progress')}
-              className="flex-1"
+              onClick={() => navigate('/education/progress')}
+              className="flex-1 h-9 text-sm"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               查看学习进度
             </Button>
             <Button 
               variant="outline"
-              onClick={() => openClientPage('/education/practice/assignment-1')}
-              className="flex-1"
+              onClick={() => navigate('/education/practice')}
+              className="flex-1 h-9 text-sm"
             >
               <Target className="w-4 h-4 mr-2" />
               实践环境
@@ -236,47 +172,8 @@ export default function EducationPage() {
         </CardContent>
       </Card>
 
-      {/* 学习路径 */}
-      <section>
-        <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-primary" />
-          推荐学习路径
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {learningPaths.map((path) => (
-            <Card key={path.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-4">{path.icon}</div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  {path.title}
-                </h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {path.description}
-                </p>
-                <div className="flex justify-between items-center text-sm text-muted-foreground mb-4">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {path.estimatedTime}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-4 h-4" />
-                    {path.courses.length} 门课程
-                  </span>
-                </div>
-                <Button 
-                  onClick={handleStartLearning}
-                  className="w-full"
-                >
-                  开始学习
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* 课程筛选 */}
-      <section>
+      <section ref={courseSectionRef}>
         <div className="flex flex-wrap gap-4 items-center mb-6">
           <span className="text-foreground font-medium">筛选课程：</span>
           
@@ -339,68 +236,67 @@ export default function EducationPage() {
         </div>
 
         {/* 课程列表 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredCourses.map((course) => (
             <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardContent className="p-0">
                 <div onClick={() => handleCourseClick(course.id)}>
                   {/* 课程缩略图 */}
-                  <div className="relative h-48 bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <BookOpen className="w-8 h-8 text-white" />
+                  <div className="relative h-32 overflow-hidden rounded-t-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.35),transparent_45%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(34,197,94,0.25),transparent_50%)]" />
+                    <div className="absolute right-3 top-3 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/80">
+                      AI Agent
                     </div>
-                    {/* 难度标签 */}
-                    <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium ${
-                      course.level === 'beginner' ? 'bg-green-100 text-green-700' :
-                      course.level === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {course.level === 'beginner' && '入门'}
-                      {course.level === 'intermediate' && '进阶'}
-                      {course.level === 'advanced' && '实战'}
-                    </div>
-                    {/* 播放按钮 */}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
-                        <Play className="w-6 h-6 text-primary ml-1" />
+                    <div className="relative z-10 flex h-full items-center justify-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white">
+                        <Bot className="h-6 w-6" />
                       </div>
                     </div>
                   </div>
 
                   {/* 课程信息 */}
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2">
+                  <div className="p-4">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                        {levelLabels[course.level]}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] px-2 py-0.5">
+                        {course.category === 'theory' ? '理论' : '实践'}
+                      </Badge>
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+                    <p className="text-muted-foreground text-xs mb-3 line-clamp-2">
                       {course.description}
                     </p>
 
                     {/* 讲师信息 */}
                     {course.instructor && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">智</span>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-[10px] font-bold">智</span>
                         </div>
-                        <span className="text-muted-foreground text-sm">{course.instructor}</span>
+                        <span className="text-muted-foreground text-xs">{course.instructor}</span>
                       </div>
                     )}
 
                     {/* 课程统计 */}
-                    <div className="flex justify-between items-center text-sm text-muted-foreground mb-4">
+                    <div className="flex justify-between items-center text-xs text-muted-foreground mb-3">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-3.5 h-3.5" />
                         {course.duration} 分钟
                       </span>
                       {course.studentsCount && (
                         <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
+                          <Users className="w-3.5 h-3.5" />
                           {course.studentsCount.toLocaleString()}
                         </span>
                       )}
                       {course.rating && (
                         <span className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                           {course.rating}
                         </span>
                       )}
@@ -408,21 +304,18 @@ export default function EducationPage() {
 
                     {/* 标签 */}
                     {course.tags && course.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {course.tags.slice(0, 3).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-secondary rounded-full text-xs text-muted-foreground"
-                          >
+                          <Badge key={index} variant="gray" className="text-[10px] px-2 py-0.5">
                             {tag}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     )}
 
                     {/* 操作按钮 */}
                     <Button 
-                      className="w-full"
+                      className="w-full h-8 text-xs"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCourseClick(course.id);
@@ -438,28 +331,6 @@ export default function EducationPage() {
         </div>
       </section>
 
-      {/* 成就系统预览 */}
-      <section>
-        <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-primary" />
-          学习成就
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {achievements.map((achievement) => (
-            <Card key={achievement.id}>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl mb-2">{achievement.icon}</div>
-                <h4 className="font-semibold text-foreground text-sm mb-1">
-                  {achievement.title}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {achievement.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
       </div>
     </div>
   );
