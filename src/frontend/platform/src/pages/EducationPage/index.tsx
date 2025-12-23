@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { BookOpen, Bot, Clock, Users, Star, Play, Target, BarChart3 } from 'lucide-react';
+import { BookOpen, Clock, Users, Star, Play, Target, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/bs-ui/badge';
 import { Button } from '@/components/bs-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/bs-ui/card';
@@ -17,6 +17,7 @@ const levelLabels: Record<Course['level'], string> = {
 export default function EducationPage() {
   const navigate = useNavigate();
   const courseSectionRef = useRef<HTMLDivElement | null>(null);
+  const defaultCover = '/assets/education/ai-agent-course-cover.png';
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -242,16 +243,16 @@ export default function EducationPage() {
               <CardContent className="p-0">
                 <div onClick={() => handleCourseClick(course.id)}>
                   {/* 课程缩略图 */}
-                  <div className="relative h-32 overflow-hidden rounded-t-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.35),transparent_45%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(34,197,94,0.25),transparent_50%)]" />
+                  <div className="relative h-32 overflow-hidden rounded-t-md bg-slate-900">
+                    <img
+                      src={course.thumbnail || defaultCover}
+                      alt={`${course.title} 课程封面`}
+                      className="absolute inset-0 h-full w-full object-cover object-top scale-[0.92] origin-top"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/40" />
                     <div className="absolute right-3 top-3 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/80">
                       AI Agent
-                    </div>
-                    <div className="relative z-10 flex h-full items-center justify-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white">
-                        <Bot className="h-6 w-6" />
-                      </div>
                     </div>
                   </div>
 

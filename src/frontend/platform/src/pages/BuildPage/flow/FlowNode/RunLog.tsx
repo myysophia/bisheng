@@ -101,7 +101,7 @@ export default function RunLog({ node, children }) {
 
     if (state === Status.loading) return (
         <div className='bisheng-node-top flex items-center'>
-            <LoadIcon className="text-primary mr-2" />
+            <LoadIcon className="size-4 shrink-0 text-primary mr-2" />
             <span className='text-sm text-primary'>{t('running')}</span>
         </div>
     );

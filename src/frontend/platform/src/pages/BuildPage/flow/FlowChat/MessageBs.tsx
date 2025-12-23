@@ -38,7 +38,7 @@ const ReasoningLog = ({ loading, msg = '' }) => {
         <div className="rounded-sm border">
             <div className="flex justify-between items-center px-4 py-2 cursor-pointer" onClick={() => setOpen(!open)}>
                 {loading ? <div className="flex items-center font-bold gap-2 text-sm">
-                    <LoadIcon className="text-primary duration-300" />
+                    <LoadIcon className="size-4 shrink-0 text-primary duration-300" />
                     <span>思考中</span>
                 </div>
                     : <div className="flex items-center font-bold gap-2 text-sm">

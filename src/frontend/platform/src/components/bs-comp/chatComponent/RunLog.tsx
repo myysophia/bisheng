@@ -50,7 +50,7 @@ export default function RunLog({ data }) {
                 <div className="flex items-center font-bold gap-2 text-sm">
                     {
                         data.end ? <ToastIcon type={lost ? 'error' : 'success'} /> :
-                            <LoadIcon className="text-primary duration-300" />
+                            <LoadIcon className="size-4 shrink-0 text-primary duration-300" />
                     }
                     <span>{title}</span>
                 </div>

@@ -1,10 +1,9 @@
-import { LoadingIcon } from '@/components/bs-icons/loading';
 import { Card, CardContent } from '@/components/bs-ui/card';
 import { useToast } from '@/components/bs-ui/toast/use-toast';
 import { cname } from '@/components/bs-ui/utils';
 import { WorkflowNode } from '@/types/flow';
 import { Handle, NodeToolbar, Position } from '@xyflow/react';
-import { ChevronDown } from 'lucide-react';
+import { Bot, ChevronDown } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from '../Sidebar';
 import EditText from './EditText';
@@ -172,7 +171,7 @@ function CustomNode({ data: node, selected, isConnectable }: { data: WorkflowNod
                 {/* top */}
                 <RunLog node={node}>
                     <div className='bisheng-node-top flex items-center'>
-                        <LoadingIcon className='size-5 text-[#B3BBCD]' />
+                        <Bot className='size-4 text-[#B3BBCD]' />
                         <span className='text-sm text-[#B3BBCD]'>E-Agent</span>
                     </div>
                 </RunLog>
