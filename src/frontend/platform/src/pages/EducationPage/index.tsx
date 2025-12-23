@@ -247,7 +247,7 @@ export default function EducationPage() {
                     <img
                       src={course.thumbnail || defaultCover}
                       alt={`${course.title} 课程封面`}
-                      className="absolute inset-0 h-full w-full object-cover object-top scale-[0.92] origin-top"
+                      className="absolute inset-0 h-full w-full object-cover object-top"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/40" />
