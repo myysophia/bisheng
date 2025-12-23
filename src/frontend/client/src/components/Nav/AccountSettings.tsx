@@ -133,7 +133,7 @@ function AccountSettings() {
             className="select-item text-sm"
           >
             <GanttChartIcon className="icon-md" />
-            管理后台
+            应用中心
           </Select.SelectItem>
         </a>
         <Select.SelectItem
