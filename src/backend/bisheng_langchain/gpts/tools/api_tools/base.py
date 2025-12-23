@@ -28,7 +28,7 @@ class APIToolBase(BaseModel):
     client: Any = Field(default=None, exclude=True)  #: :meta private:
     async_client: Any = Field(default=None, exclude=True)  #: :meta private:
     headers: Dict[str, Any] = {}
-    request_timeout: int = 30
+    request_timeout: int = 800
     url: str = None
     params: Dict[str, Any] = {}
     input_key: str = 'keyword'
@@ -39,7 +39,7 @@ class APIToolBase(BaseModel):
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        timeout = values.get('request_timeout', 30)
+        timeout = values.get('request_timeout', 800)
         if not values.get('client'):
             values['client'] = Requests(headers=values.get('headers'), request_timeout=timeout)
         if not values.get('async_client'):
