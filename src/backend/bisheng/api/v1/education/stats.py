@@ -9,11 +9,13 @@ from sqlalchemy.orm import Session
 from bisheng.api.v1.education.schemas import LearningStatsResponse
 from bisheng.api.v1.education.services import StatsService
 from bisheng.api.v1.education.auth import get_education_user, EducationAuthMiddleware
+from bisheng.api.v1.education.cache import education_cache
 from bisheng.database.base import session_getter
 from bisheng.api.services.user_service import UserPayload
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["education"])
+STATS_CACHE_TTL_SECONDS = 60
 
 
 @router.get("/stats/overview", response_model=LearningStatsResponse)
@@ -23,10 +25,17 @@ async def get_learning_stats_overview(
     """Get overall learning statistics and platform metrics."""
     EducationAuthMiddleware.log_access(login_user, "GET /stats/overview")
     
+    cache_key = "education:stats:overview"
+    cached = education_cache.get(cache_key)
+    if cached:
+        return cached
+
     with session_getter() as db:
         stats_service = StatsService(db)
         stats = stats_service.get_learning_overview()
-        return LearningStatsResponse(**stats)
+        response = LearningStatsResponse(**stats)
+        education_cache.set(cache_key, response, STATS_CACHE_TTL_SECONDS)
+        return response
 
 
 @router.get("/stats/user/{user_id}")

@@ -20,7 +20,7 @@ export default function EducationPage() {
   const defaultCover = '/assets/education/ai-agent-course-cover.png';
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isCoursesLoading, setIsCoursesLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
   const [learningStats, setLearningStats] = useState<LearningStats>({
     total_courses: 0,
@@ -28,9 +28,17 @@ export default function EducationPage() {
     average_rating: 0,
     total_duration: 0
   });
+  const [displayStats, setDisplayStats] = useState<LearningStats>({
+    total_courses: 0,
+    total_students: 0,
+    average_rating: 0,
+    total_duration: 0
+  });
+  const displayStatsRef = useRef(displayStats);
 
   // 加载课程数据
   const loadCourses = async () => {
+    setIsCoursesLoading(true);
     try {
       const response = await educationAPI.course.getCourses({
         level: selectedLevel !== 'all' ? selectedLevel : undefined,
@@ -41,6 +49,8 @@ export default function EducationPage() {
       console.error('加载课程失败:', error);
       // 如果API失败，使用fallback数据
       setCourses([]);
+    } finally {
+      setIsCoursesLoading(false);
     }
   };
 
@@ -62,19 +72,47 @@ export default function EducationPage() {
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        await Promise.all([loadCourses(), loadStats()]);
-      } catch (error) {
-        console.error('加载数据失败:', error);
-      } finally {
-        setIsLoading(false);
+    loadCourses();
+    loadStats();
+  }, [selectedLevel, selectedCategory]);
+
+  useEffect(() => {
+    displayStatsRef.current = displayStats;
+  }, [displayStats]);
+
+  useEffect(() => {
+    const startStats = displayStatsRef.current;
+    const targetStats = learningStats;
+    const hasChange = Object.keys(targetStats).some((key) => {
+      const statKey = key as keyof LearningStats;
+      return startStats[statKey] !== targetStats[statKey];
+    });
+    if (!hasChange) {
+      return;
+    }
+    let rafId = 0;
+    let startTime: number | null = null;
+    const duration = 600;
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = easeOut(progress);
+      const nextStats: LearningStats = {
+        total_courses: Math.round(startStats.total_courses + (targetStats.total_courses - startStats.total_courses) * eased),
+        total_students: Math.round(startStats.total_students + (targetStats.total_students - startStats.total_students) * eased),
+        average_rating: Number((startStats.average_rating + (targetStats.average_rating - startStats.average_rating) * eased).toFixed(1)),
+        total_duration: Math.round(startStats.total_duration + (targetStats.total_duration - startStats.total_duration) * eased),
+      };
+      displayStatsRef.current = nextStats;
+      setDisplayStats(nextStats);
+      if (progress < 1) {
+        rafId = requestAnimationFrame(animate);
       }
     };
-
-    loadData();
-  }, [selectedLevel, selectedCategory]);
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [learningStats]);
 
   const filteredCourses = courses;
 
@@ -91,7 +129,7 @@ export default function EducationPage() {
     courseSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  if (isLoading) {
+  if (isCoursesLoading && courses.length === 0) {
     return <EducationLoading message="正在加载课程数据..." />;
   }
 
@@ -117,19 +155,19 @@ export default function EducationPage() {
           <Card>
             <CardContent className="p-3 grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <div className="text-xl font-semibold text-foreground">{learningStats.total_courses}</div>
+                <div className="text-xl font-semibold text-foreground">{displayStats.total_courses}</div>
                 <div className="text-[11px] text-muted-foreground">精品课程</div>
               </div>
               <div>
-                <div className="text-xl font-semibold text-foreground">{learningStats.total_students.toLocaleString()}</div>
+                <div className="text-xl font-semibold text-foreground">{displayStats.total_students.toLocaleString()}</div>
                 <div className="text-[11px] text-muted-foreground">学习人数</div>
               </div>
               <div>
-                <div className="text-xl font-semibold text-foreground">{learningStats.average_rating}</div>
+                <div className="text-xl font-semibold text-foreground">{displayStats.average_rating.toFixed(1)}</div>
                 <div className="text-[11px] text-muted-foreground">平均评分</div>
               </div>
               <div>
-                <div className="text-xl font-semibold text-foreground">{learningStats.total_duration}</div>
+                <div className="text-xl font-semibold text-foreground">{displayStats.total_duration}</div>
                 <div className="text-[11px] text-muted-foreground">总时长(分钟)</div>
               </div>
             </CardContent>
