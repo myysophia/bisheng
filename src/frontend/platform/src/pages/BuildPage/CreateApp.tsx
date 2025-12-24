@@ -1,5 +1,5 @@
 import { AssistantIcon } from "@/components/bs-icons";
-import { LoadIcon } from "@/components/bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { Accordion } from "@/components/bs-ui/accordion";
 import { Button } from "@/components/bs-ui/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/bs-ui/dialog";
@@ -44,6 +44,18 @@ const CreateApp = forwardRef<ModalRef, ModalProps>(({ onSave }, ref) => {
     const [appId, setAppId] = useState<string>('');
     // State for errors
     const [errors, setErrors] = useState<any>({});
+    const getFlowGuidedQuery = () => {
+        const guidedStepIndex = sessionStorage.getItem('flowGuidedStepIndex');
+        if (!guidedStepIndex) return '';
+        sessionStorage.removeItem('flowGuidedStepIndex');
+        const index = Number(guidedStepIndex);
+        if (!Number.isFinite(index)) return '';
+        return `?guidedStep=${index}`;
+    };
+    const navigateToFlow = (id: string) => {
+        const query = getFlowGuidedQuery();
+        navigate(`/flow/${id}${query}`);
+    };
 
     useImperativeHandle(ref, () => ({
         // create
@@ -196,7 +208,7 @@ ${t('build.exampleTwo', { ns: 'bs' })}
                     }
                 })
                 const res = await captureAndAlertRequestErrorHoc(createWorkflowApi(formData.name, formData.desc, formData.url, tempDataRef.current))
-                if (res) navigate('/flow/' + res.id)
+                if (res) navigateToFlow(res.id)
             }
         } else {
             // 创建
@@ -208,11 +220,10 @@ ${t('build.exampleTwo', { ns: 'bs' })}
                     navigate('/assistant/' + res.id)
                 }
             } else {
-                if (appId) return navigate('/flow/' + appId) // 避免重复创建
+                if (appId) return navigateToFlow(appId) // 避免重复创建
                 // 创建工作流
                 const workflow = await captureAndAlertRequestErrorHoc(createWorkflowApi(formData.name, formData.desc, formData.url))
                 if (workflow) {
-                    const navigateToFlow = (id) => navigate(`/flow/${id}`);
                     // 非Pro版本直接跳转
                     if (!appConfig.isPro) return navigateToFlow(workflow.id)
 
@@ -293,7 +304,7 @@ ${t('build.exampleTwo', { ns: 'bs' })}
                         </Button>
                     </DialogClose>
                     <Button disabled={!formData.name || loading} type="submit" className="px-11" onClick={handleSubmit}>
-                        {loading && <LoadIcon className="mr-2" />}
+                        {loading && <Loading className="mr-2 h-4 w-4 text-muted-foreground" />}
                         {t(isEditMode ? 'save' : 'create')}
                     </Button>
                 </DialogFooter>
