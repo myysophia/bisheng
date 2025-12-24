@@ -35,7 +35,7 @@ export default function Header({ onSave, onLine, onTabChange }) {
 
     const [tabType, setTabType] = useState('edit')
     return <div className="flex justify-between bg-background-login items-center border-b px-4">
-        <div className="flex items-center gap-2 py-4">
+        <div className="flex items-center gap-2 py-4" id="agent-basic-info">
             <Button variant="outline" size="icon" onClick={() => navigate(-1)}><ChevronLeft className="h-4 w-4" /></Button>
             <TitleLogo
                 url={assistantState.logo}
@@ -68,9 +68,8 @@ export default function Header({ onSave, onLine, onTabChange }) {
             >{t('api.externalPublishing')}</div>
         </div>
         <div className="flex gap-4">
-            <Button variant="outline" className="px-10" type="button" onClick={onSave}>{t('build.save')}</Button>
-            <Button type="submit" className="px-10" onClick={() => onLine(assistantState.status === OnlineState.OffLine)}>{assistantState.status === OnlineState.OnLine ? t('build.offline') : t('build.online')}</Button>
+            <Button id="save-agent-config" variant="outline" className="px-10" type="button" onClick={onSave}>{t('build.save')}</Button>
+            <Button id="deployment-config" type="submit" className="px-10" onClick={() => onLine(assistantState.status === OnlineState.OffLine)}>{assistantState.status === OnlineState.OnLine ? t('build.offline') : t('build.online')}</Button>
         </div>
     </div>
 };
-

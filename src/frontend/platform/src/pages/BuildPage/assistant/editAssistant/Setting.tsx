@@ -49,7 +49,7 @@ export default function Setting() {
             <span>{t("build.modelConfiguration")}</span>
           </AccordionTrigger>
           <AccordionContent className="py-2">
-            <div className="mb-4 px-6">
+            <div id="llm-model-selector" className="mb-4 px-6">
               <label htmlFor="model" className="bisheng-label">
                 {t("build.model")}
               </label>
@@ -60,25 +60,27 @@ export default function Setting() {
                 }
               />
             </div>
-            <div className="mb-4 px-6">
-              <label htmlFor="slider" className="bisheng-label">
-                {t("build.temperature")}
-              </label>
-              <Temperature
-                value={assistantState.temperature}
-                onChange={(val) =>
-                  dispatchAssistant("setting", { temperature: val })
-                }
-              ></Temperature>
-            </div>
-            <div className="mb-4 px-6">
-              <label htmlFor="slider" className="bisheng-label flex gap-1">
-                {t("build.maxToken")}
-                <QuestionTooltip content={t("build.maxTokenTip")}></QuestionTooltip>
-              </label>
-              <Input value={assistantState.max_token} type="number" className="mt-2" defaultValue={32000} min={0} onChange={e =>
-                dispatchAssistant("setting", { max_token: Number(e.target.value) })
-              }></Input>
+            <div id="model-parameters" className="mb-4 px-6 space-y-4">
+              <div>
+                <label htmlFor="slider" className="bisheng-label">
+                  {t("build.temperature")}
+                </label>
+                <Temperature
+                  value={assistantState.temperature}
+                  onChange={(val) =>
+                    dispatchAssistant("setting", { temperature: val })
+                  }
+                ></Temperature>
+              </div>
+              <div>
+                <label htmlFor="slider" className="bisheng-label flex gap-1">
+                  {t("build.maxToken")}
+                  <QuestionTooltip content={t("build.maxTokenTip")}></QuestionTooltip>
+                </label>
+                <Input value={assistantState.max_token} type="number" className="mt-2" defaultValue={32000} min={0} onChange={e =>
+                  dispatchAssistant("setting", { max_token: Number(e.target.value) })
+                }></Input>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -92,16 +94,18 @@ export default function Setting() {
               <label htmlFor="open" className="bisheng-label">
                 {t("build.openingStatement")}
               </label>
-              <Textarea
-                name="open"
-                className="mt-2 min-h-[34px]"
-                style={{ height: 56 }}
-                placeholder={t("build.assistantMessageFormat")}
-                value={assistantState.guide_word}
-                onChange={(e) =>
-                  dispatchAssistant("setting", { guide_word: e.target.value })
-                }
-              ></Textarea>
+              <div id="output-format-config">
+                <Textarea
+                  name="open"
+                  className="mt-2 min-h-[34px]"
+                  style={{ height: 56 }}
+                  placeholder={t("build.assistantMessageFormat")}
+                  value={assistantState.guide_word}
+                  onChange={(e) =>
+                    dispatchAssistant("setting", { guide_word: e.target.value })
+                  }
+                ></Textarea>
+              </div>
               {assistantState.guide_word.length > 1000 && (
                 <p className="bisheng-tip mt-1">
                   {t("build.maximumPromptLength")}
@@ -122,27 +126,31 @@ export default function Setting() {
                   </Tooltip>
                 </TooltipProvider>
               </label>
-              <InputList
-                className="mt-2"
-                rules={[{ maxLength: 50, message: t("build.maxCharacters50") }]}
-                value={assistantState.guide_question}
-                onChange={(list) => {
-                  dispatchAssistant("setting", { guide_question: list });
-                }}
-                placeholder={t("build.enterGuidingQuestions")}
-              ></InputList>
+              <div id="input-processing-config">
+                <InputList
+                  className="mt-2"
+                  rules={[{ maxLength: 50, message: t("build.maxCharacters50") }]}
+                  value={assistantState.guide_question}
+                  onChange={(list) => {
+                    dispatchAssistant("setting", { guide_question: list });
+                  }}
+                  placeholder={t("build.enterGuidingQuestions")}
+                ></InputList>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
         {/* 内容安全审查 */}
-        {appConfig.isPro && <AssistantSetting id={assistantState.id} type={3} />}
+        <div id="safety-config">
+          {appConfig.isPro && <AssistantSetting id={assistantState.id} type={3} />}
+        </div>
       </Accordion>
       <h1 className="border-b bg-background-login indent-4 text-sm leading-8 text-muted-foreground">
         {t("build.knowledge")}
       </h1>
       <Accordion type="multiple" className="w-full">
         {/* 知识库 */}
-        <AccordionItem value="item-1">
+        <AccordionItem id="memory-config" value="item-1">
           <AccordionTrigger>
             <div className="flex flex-1 items-center justify-between">
               <span>{t("build.knowledgeBase")}</span>
@@ -204,7 +212,7 @@ export default function Setting() {
         }
       >
         {/* 工具 */}
-        <AccordionItem value="item-1">
+        <AccordionItem id="tools-config" value="item-1">
           <AccordionTrigger>
             <div className="flex flex-1 items-center justify-between">
               <span>{t("build.tools")}</span>

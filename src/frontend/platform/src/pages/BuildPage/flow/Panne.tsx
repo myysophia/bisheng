@@ -9,6 +9,7 @@ import '@xyflow/react/dist/base.css';
 import '@xyflow/react/dist/style.css';
 import cloneDeep from "lodash-es/cloneDeep";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Controls } from "./Controls";
 import CustomEdge from "./FlowEdge";
 import FlowNode from "./FlowNode";
@@ -28,9 +29,11 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
     // 导入自适应布局
     const fitView = useFlowStore(state => state.fitView)
     const [flowKey, setFlowKey] = useState(1)
+    const location = useLocation()
     
     // 引导系统
     const guidedTour = useGuidedTour(workflowGuidedSteps);
+    const guidedStartRef = useRef(false)
     
     useEffect(() => {
         if (reactFlowInstance) {
@@ -46,6 +49,21 @@ export default function Panne({ flow, preFlow }: { flow: WorkFlow, preFlow: stri
             setReactFlowInstance(null) // 销毁reactflow实例
         }
     }, [])
+
+    useEffect(() => {
+        if (guidedStartRef.current) return;
+        const params = new URLSearchParams(location.search);
+        const guidedStep = params.get('guidedStep') ?? sessionStorage.getItem('flowGuidedStepIndex');
+        if (!guidedStep) return;
+        guidedStartRef.current = true;
+        sessionStorage.removeItem('flowGuidedStepIndex');
+        const stepIndex = Number(guidedStep);
+        if (Number.isFinite(stepIndex)) {
+            guidedTour.startTourAt(stepIndex);
+        } else {
+            guidedTour.startTour();
+        }
+    }, [location.search, guidedTour.startTourAt, guidedTour.startTour]);
 
     const { takeSnapshot } = useUndoRedo()
 

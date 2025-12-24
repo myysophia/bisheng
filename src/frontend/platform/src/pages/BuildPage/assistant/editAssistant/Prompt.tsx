@@ -23,7 +23,7 @@ export default function Prompt() {
         }
     }, [assistantState.prompt])
 
-    return <div className="w-[50%] h-full bg-background-login shadow-sm p-4 overflow-y-auto scrollbar-hide">
+    return <div id="agent-role-config" className="w-[50%] h-full bg-background-login shadow-sm p-4 overflow-y-auto scrollbar-hide">
         <div className="flex-between-center">
             <span className="text-sm font-medium leading-none">{t('build.assistantPortrait')}</span>
             <Dialog open={open} onOpenChange={setOpen}>
@@ -33,12 +33,14 @@ export default function Prompt() {
                 {open && <AutoPromptDialog onOpenChange={setOpen}></AutoPromptDialog>}
             </Dialog>
         </div>
-        <Textarea
-            boxClassName='h-[90%]'
-            className="h-full border-none bg-transparent scrollbar-hide focus-visible:ring-0 resize-none text-sm text-muted-foreground"
-            value={assistantState.prompt}
-            placeholder={t('prompt')}
-            onInput={(e => dispatchAssistant('setPrompt', { prompt: e.target.value }))}
-        ></Textarea>
+        <div id="system-prompt-config" className="h-[90%]">
+            <Textarea
+                boxClassName='h-full'
+                className="h-full border-none bg-transparent scrollbar-hide focus-visible:ring-0 resize-none text-sm text-muted-foreground"
+                value={assistantState.prompt}
+                placeholder={t('prompt')}
+                onInput={(e => dispatchAssistant('setPrompt', { prompt: e.target.value }))}
+            ></Textarea>
+        </div>
     </div>
 };

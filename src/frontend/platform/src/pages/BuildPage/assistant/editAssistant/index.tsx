@@ -129,6 +129,7 @@ export default function editAssistant() {
         return destroy
     }, [])
 
+
     const [showApiPage, setShowApiPage] = useState(false)
     // 离开保存
     const blocker = useBeforeUnload(changed)
@@ -148,7 +149,7 @@ export default function editAssistant() {
                         <Setting></Setting>
                     </div>
                 </div>
-                <div className="w-[40%] h-full bg-[#fff] dark:bg-background-main relative">
+                <div id="testing-panel" className="w-[40%] h-full bg-[#fff] dark:bg-background-main relative">
                     {openChat && <TestChat guideQuestion={guideQuestion} assisId={assisId} onClear={() => handleStartChat(false)}></TestChat>}
                     {/* 变更触发保存的蒙版按钮 */}
                     {changed && <div className="absolute w-full bottom-0 h-60" onClick={() => handleStartChat(true)}></div>}

@@ -24,6 +24,17 @@ export const useGuidedTour = (steps: GuidedStep[]) => {
     }));
   }, []);
 
+  // 从指定步骤开始引导
+  const startTourAt = useCallback((stepIndex: number) => {
+    const safeIndex = Math.max(0, Math.min(stepIndex, steps.length - 1));
+    setState(prev => ({
+      ...prev,
+      isActive: true,
+      currentStep: safeIndex,
+      completedSteps: new Set()
+    }));
+  }, [steps.length]);
+
   // 下一步
   const nextStep = useCallback(() => {
     setState(prev => {
@@ -71,13 +82,18 @@ export const useGuidedTour = (steps: GuidedStep[]) => {
 
   // 更新用户进度
   const updateProgress = useCallback((key: keyof GuidedTourState['userProgress'], value: number) => {
-    setState(prev => ({
-      ...prev,
-      userProgress: {
-        ...prev.userProgress,
-        [key]: value
+    setState(prev => {
+      if (prev.userProgress[key] === value) {
+        return prev;
       }
-    }));
+      return {
+        ...prev,
+        userProgress: {
+          ...prev.userProgress,
+          [key]: value
+        }
+      };
+    });
   }, []);
 
   // 跳转到指定步骤
@@ -99,6 +115,21 @@ export const useGuidedTour = (steps: GuidedStep[]) => {
   const getCurrentStep = useCallback(() => {
     return steps[state.currentStep] || null;
   }, [steps, state.currentStep]);
+
+  // 步骤列表变化时同步总数与当前索引
+  useEffect(() => {
+    setState(prev => {
+      if (prev.totalSteps === steps.length) {
+        return prev;
+      }
+      const nextIndex = Math.min(prev.currentStep, Math.max(steps.length - 1, 0));
+      return {
+        ...prev,
+        totalSteps: steps.length,
+        currentStep: nextIndex
+      };
+    });
+  }, [steps.length]);
 
   // 监听DOM变化来自动验证步骤完成
   useEffect(() => {
@@ -128,6 +159,7 @@ export const useGuidedTour = (steps: GuidedStep[]) => {
   return {
     state,
     startTour,
+    startTourAt,
     nextStep,
     prevStep,
     skipTour,

@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from collections import defaultdict
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlmodel import select
 
 logger = logging.getLogger(__name__)
 
@@ -26,21 +28,33 @@ class CourseService:
 
     def get_courses(self, level: Optional[str] = None, category: Optional[str] = None) -> List[CourseInfo]:
         """Get list of courses with optional filtering."""
-        courses = CourseDao.get_all_courses(level=level, category=category)
-        
-        return [
-            CourseInfo(
-                id=course.id,
-                title=course.title,
-                description=course.description,
-                level=course.level,
-                category=course.category or "",
-                duration=course.duration or 0,
-                chapters_count=len(ChapterDao.get_chapters_by_course_id(course.id)),
-                thumbnail=course.thumbnail or ""
+        statement = select(Course, func.count(Chapter.id)).outerjoin(
+            Chapter,
+            Chapter.course_id == Course.id
+        )
+        if level:
+            statement = statement.where(Course.level == level)
+        if category:
+            statement = statement.where(Course.category == category)
+        statement = statement.group_by(Course.id)
+        rows = self.db.exec(statement).all()
+
+        course_infos: List[CourseInfo] = []
+        for course, chapters_count in rows:
+            course_infos.append(
+                CourseInfo(
+                    id=course.id,
+                    title=course.title,
+                    description=course.description,
+                    level=course.level,
+                    category=course.category or "",
+                    duration=course.duration or 0,
+                    chapters_count=int(chapters_count or 0),
+                    thumbnail=course.thumbnail or ""
+                )
             )
-            for course in courses
-        ]
+
+        return course_infos
 
     def get_course_by_id(self, course_id: str, user_id: Optional[int] = None) -> Optional[CourseResponse]:
         """Get detailed course information by ID with optional user progress."""
@@ -753,98 +767,84 @@ class GuidedBuilderService:
 
     def get_guided_steps(self) -> List[GuidedStep]:
         """Get predefined steps for guided agent building with comprehensive flow."""
-        # Comprehensive guided steps for intelligent agent creation
+        # Comprehensive guided steps for workflow creation
         steps = [
             GuidedStep(
                 id="step-1",
-                title="智能体基本信息",
-                description="设置智能体的名称、描述和基本属性",
-                focus_element="#agent-basic-info",
-                instructions="首先为您的智能体起一个有意义的名称，并简要描述它的功能和用途。这将帮助您和其他用户更好地理解这个智能体的作用。"
+                title="欢迎进入工作流编辑器",
+                description="了解工作流画布与基础操作",
+                focus_element=".react-flow",
+                instructions="工作流由多个节点组成，数据会沿着节点连接流动。接下来我们会一步步创建一个最小可用的工作流。"
             ),
             GuidedStep(
                 id="step-2",
-                title="定义智能体角色",
-                description="设置智能体的角色定位和专业领域",
-                focus_element="#agent-role-config",
-                instructions="选择或自定义智能体的角色。角色决定了智能体的行为模式和专业知识领域。您可以选择预设角色如'客服助手'、'技术顾问'，或创建自定义角色。"
+                title="认识组件库",
+                description="浏览左侧可用节点类型",
+                focus_element=".flow-sidebar",
+                instructions="左侧是节点组件库，包含基础节点与工具节点。您可以拖拽节点到画布中搭建流程。"
             ),
             GuidedStep(
                 id="step-3",
-                title="配置系统提示词",
-                description="编写智能体的核心指令和行为准则",
-                focus_element="#system-prompt-config",
-                instructions="系统提示词是智能体的'大脑'，定义了它如何思考和回应。请详细描述智能体应该如何行为、遵循什么原则、具备什么专业知识。"
+                title="添加输入节点",
+                description="拖拽输入节点到画布中心",
+                focus_element=".flow-sidebar [data-node-type]",
+                instructions="从组件库中拖拽“输入”节点到画布中央，作为工作流的入口。"
             ),
             GuidedStep(
                 id="step-4",
-                title="选择语言模型",
-                description="选择适合的大语言模型作为智能体的核心引擎",
-                focus_element="#llm-model-selector",
-                instructions="不同的语言模型有不同的特点和能力。GPT-4适合复杂推理，Claude适合长文本处理，国产模型如通义千问适合中文场景。根据您的需求选择合适的模型。"
+                title="添加大模型节点",
+                description="拖拽大模型节点到输入节点右侧",
+                focus_element=".flow-sidebar",
+                instructions="将“大模型”节点放在输入节点的右侧，用于处理输入内容。"
             ),
             GuidedStep(
                 id="step-5",
-                title="设置模型参数",
-                description="调整温度、最大令牌数等模型参数",
-                focus_element="#model-parameters",
-                instructions="温度控制创造性（0.1保守，0.9创新），最大令牌数限制回复长度。根据应用场景调整：客服需要保守准确，创作需要更多创造性。"
+                title="连接节点",
+                description="将输入节点连接到大模型节点",
+                focus_element=".react-flow",
+                instructions="拖拽输入节点的连接点到大模型节点，完成第一条数据流连接。"
             ),
             GuidedStep(
                 id="step-6",
-                title="配置输入处理",
-                description="设置智能体如何接收和处理用户输入",
-                focus_element="#input-processing-config",
-                instructions="配置输入验证规则、预处理步骤和输入格式要求。这确保智能体能正确理解用户的请求并给出合适的回应。"
+                title="添加输出节点",
+                description="拖拽输出节点到大模型节点右侧",
+                focus_element=".flow-sidebar",
+                instructions="添加“输出”节点，作为工作流的最终输出结果。"
             ),
             GuidedStep(
                 id="step-7",
-                title="设置输出格式",
-                description="定义智能体回复的格式和结构",
-                focus_element="#output-format-config",
-                instructions="选择输出格式：纯文本、结构化JSON、Markdown等。设置回复的结构模板，如是否包含推理过程、置信度、相关建议等。"
+                title="连接输出节点",
+                description="将大模型节点连接到输出节点",
+                focus_element=".react-flow",
+                instructions="完成大模型与输出节点的连接，构建完整的端到端流程。"
             ),
             GuidedStep(
                 id="step-8",
-                title="添加工具能力",
-                description="为智能体配置外部工具和API调用能力",
-                focus_element="#tools-config",
-                instructions="选择智能体可以使用的工具：搜索引擎、计算器、文件处理、API调用等。工具让智能体能够执行实际操作，而不仅仅是文本生成。"
+                title="配置节点参数",
+                description="点击节点打开配置面板",
+                focus_element=".react-flow",
+                instructions="点击大模型节点，调整模型与提示词配置，让输出符合预期。"
             ),
             GuidedStep(
                 id="step-9",
-                title="设置记忆机制",
-                description="配置智能体的上下文记忆和历史对话管理",
-                focus_element="#memory-config",
-                instructions="设置对话历史长度、重要信息提取规则、长期记忆存储策略。良好的记忆机制让智能体能够维持连贯的多轮对话。"
+                title="保存工作流",
+                description="保存当前工作流配置",
+                focus_element=".react-flow",
+                instructions="点击顶部保存按钮，持久化当前配置，方便后续编辑与发布。"
             ),
             GuidedStep(
                 id="step-10",
-                title="安全与限制",
-                description="设置安全防护和使用限制",
-                focus_element="#safety-config",
-                instructions="配置内容过滤、敏感信息保护、使用频率限制等安全措施。确保智能体的使用符合法规要求和道德标准。"
+                title="测试运行",
+                description="运行并验证工作流效果",
+                focus_element=".react-flow",
+                instructions="点击运行按钮进行测试，确认节点连接与输出效果。"
             ),
             GuidedStep(
                 id="step-11",
-                title="测试验证",
-                description="测试智能体的各项功能和性能",
-                focus_element="#testing-panel",
-                instructions="使用不同类型的测试用例验证智能体的表现：基础问答、复杂推理、边界情况处理。确保智能体能够稳定可靠地工作。"
-            ),
-            GuidedStep(
-                id="step-12",
-                title="部署配置",
-                description="设置智能体的部署参数和运行环境",
-                focus_element="#deployment-config",
-                instructions="配置并发处理能力、资源分配、监控告警等部署参数。选择合适的部署模式：开发测试、生产环境或公开服务。"
-            ),
-            GuidedStep(
-                id="step-13",
-                title="完成创建",
-                description="保存智能体配置并完成创建流程",
-                focus_element="#save-agent-config",
-                instructions="检查所有配置项，确认无误后保存智能体。您可以为智能体设置版本标签，方便后续管理和迭代优化。"
+                title="完成引导",
+                description="继续探索更多工作流能力",
+                focus_element=".react-flow",
+                instructions="恭喜完成基础引导，您可以继续添加更多节点和高级配置。"
             )
         ]
         return steps

@@ -12,6 +12,7 @@ export default function GuidedBuilder() {
   const [steps, setSteps] = useState<GuidedStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<string | undefined>();
 
   useEffect(() => {
     const loadSteps = async () => {
@@ -58,13 +59,31 @@ export default function GuidedBuilder() {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-foreground">引导构建</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">工作流引导</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-xs text-muted-foreground">
-            按步骤完成智能体构建流程，点击每个步骤可展开查看详细说明与操作提示。
+            按步骤完成工作流构建流程，点击每个步骤可展开查看详细说明与操作提示。
           </div>
-          <Accordion type="single" collapsible className="space-y-2">
+          <div className="flex gap-3">
+            <Button onClick={() => navigate('/education')}>返回教学首页</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                sessionStorage.setItem('flowGuidedStepIndex', '0');
+                navigate('/build/apps');
+              }}
+            >
+              开始工作流引导
+            </Button>
+          </div>
+          <Accordion
+            type="single"
+            collapsible
+            value={activeStep}
+            onValueChange={(value) => setActiveStep(value || undefined)}
+            className="space-y-2"
+          >
             {steps.map((step, index) => {
               const instructionLines = (step.instructions ?? '')
                 .split(/\n+/)
@@ -92,6 +111,17 @@ export default function GuidedBuilder() {
                             <li key={line}>{line}</li>
                           ))}
                         </ul>
+                        <div className="pt-2">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              sessionStorage.setItem('flowGuidedStepIndex', String(index));
+                              navigate('/build/apps');
+                            }}
+                          >
+                            跳转到此步骤
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">暂无详细说明，可先按步骤标题进行配置。</div>
@@ -101,10 +131,6 @@ export default function GuidedBuilder() {
               );
             })}
           </Accordion>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate('/education')}>返回教学首页</Button>
-            <Button variant="outline" onClick={() => navigate('/build')}>前往智能体构建</Button>
-          </div>
         </CardContent>
       </Card>
     </div>

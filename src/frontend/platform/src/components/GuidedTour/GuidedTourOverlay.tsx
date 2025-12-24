@@ -23,6 +23,9 @@ export const GuidedTourOverlay: React.FC<GuidedTourProps> = ({
   const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number } | null>(null);
 
   const currentStepData = steps[currentStep];
+  const canProceed = currentStepData
+    ? currentStepData.nextEnabled !== false && (!currentStepData.validation || currentStepData.validation())
+    : false;
 
   // 计算高亮区域位置
   const calculateHighlightPosition = useCallback((target: string): HighlightPosition | null => {
@@ -101,6 +104,14 @@ export const GuidedTourOverlay: React.FC<GuidedTourProps> = ({
       window.removeEventListener('scroll', updatePositions);
     };
   }, [isActive, currentStepData, calculateHighlightPosition, calculateTooltipPosition]);
+
+  // 自动滚动到目标区域
+  useEffect(() => {
+    if (!isActive || !currentStepData?.target) return;
+    const element = document.querySelector(currentStepData.target);
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  }, [isActive, currentStepData?.target]);
 
   // 处理下一步
   const handleNext = useCallback(() => {
@@ -221,6 +232,11 @@ export const GuidedTourOverlay: React.FC<GuidedTourProps> = ({
               </div>
             </div>
           )}
+          {!canProceed && (
+            <div className="mb-4 text-xs text-amber-600">
+              完成当前操作后可继续下一步
+            </div>
+          )}
 
           {/* 操作按钮 */}
           <div className="flex justify-between items-center">
@@ -250,6 +266,7 @@ export const GuidedTourOverlay: React.FC<GuidedTourProps> = ({
               <Button
                 size="sm"
                 onClick={handleNext}
+                disabled={!canProceed}
                 className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600"
               >
                 {currentStep === steps.length - 1 ? (

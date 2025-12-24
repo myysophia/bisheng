@@ -144,6 +144,7 @@ export default function apps() {
     }
 
     const createAppModalRef = useRef(null)
+    const guidedOpenRef = useRef(false)
     const handleCreateApp = async (type, tempId = 0) => {
         if (type === AppType.SKILL) {
             if (!tempId) return navigate('/build/skill')
@@ -168,6 +169,15 @@ export default function apps() {
         setSelectLabel(allOptions.find(l => l.value === id))
         filterData({ tag_id: id })
     }
+
+    useEffect(() => {
+        const guidedStepIndex = sessionStorage.getItem('flowGuidedStepIndex')
+        if (!guidedStepIndex || guidedOpenRef.current) {
+            return
+        }
+        guidedOpenRef.current = true
+        createAppModalRef.current?.open(AppType.FLOW)
+    }, [])
 
     const tempTypeRef = useRef(null)
     return <div className="h-full relative">
