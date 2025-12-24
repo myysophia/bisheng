@@ -1,4 +1,5 @@
-import { LoadIcon, LoadingIcon } from "@/components/bs-icons/loading";
+import { LoadingIcon } from "@/components/bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { Button } from "@/components/bs-ui/button";
 import { Label } from "@/components/bs-ui/label";
 import Cascader from "@/components/bs-ui/select/cascader";
@@ -211,7 +212,7 @@ export default function WorkbenchModel({ llmOptions, embeddings, onBack }) {
                     disabled={saveload}
                     onClick={handleSaveWithConfirm}
                 >
-                    {saveload && <LoadIcon className="mr-2" />}
+                    {saveload && <Loading className="mr-2 h-4 w-4 text-muted-foreground" />}
                     {t('save')}
                 </Button>
             </div>

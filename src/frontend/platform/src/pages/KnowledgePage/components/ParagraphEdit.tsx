@@ -1,5 +1,5 @@
 import FileView from "@/components/bs-comp/FileView";
-import { LoadIcon } from "@/components/bs-icons";
+import Loading from "@/components/ui/loading";
 import { Button } from "@/components/bs-ui/button";
 import { useToast } from "@/components/bs-ui/toast/use-toast";
 import { getFileBboxApi, getFilePathApi, getKnowledgeChunkApi, updateChunkApi, updatePreviewChunkApi } from "@/controllers/API";
@@ -268,7 +268,10 @@ const ParagraphEdit = ({
                 {!value && <p className="absolute left-0 text-red-500 text-xs mt-2">{t('inputNotEmpty')}</p>}
                 {!isUns && <div className="flex justify-end gap-4">
                     <Button className="px-6 h-8" variant="outline" onClick={onClose}>{t('cancel', { ns: 'bs' })}</Button>
-                    <Button className="px-6 h-8" disabled={loading} onClick={handleSave}><LoadIcon className={`mr-1 ${loading ? '' : 'hidden'}`} />{t('save', { ns: 'bs' })}</Button>
+                    <Button className="px-6 h-8" disabled={loading} onClick={handleSave}>
+                        {loading && <Loading className="mr-1 h-4 w-4 text-muted-foreground" />}
+                        {t('save', { ns: 'bs' })}
+                    </Button>
                 </div>}
             </div>
             {isUns && <>
@@ -291,7 +294,12 @@ const ParagraphEdit = ({
                         </div>
                         <div className="flex justify-end gap-4">
                             {edit && <Button className="px-6 h-8" variant="outline" onClick={onClose}>{t('cancel', { ns: 'bs' })}</Button>}
-                            {edit && <Button className="px-6 h-8" disabled={loading} onClick={handleSave}><LoadIcon className={`mr-1 ${loading ? '' : 'hidden'}`} />{t('save', { ns: 'bs' })}</Button>}
+                            {edit && (
+                                <Button className="px-6 h-8" disabled={loading} onClick={handleSave}>
+                                    {loading && <Loading className="mr-1 h-4 w-4 text-muted-foreground" />}
+                                    {t('save', { ns: 'bs' })}
+                                </Button>
+                            )}
                             {!edit && <X className="cursor-pointer size-5 text-gray-500" onClick={onClose} />}
                         </div>
                     </div>

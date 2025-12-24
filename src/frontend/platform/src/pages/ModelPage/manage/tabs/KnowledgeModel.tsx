@@ -1,4 +1,5 @@
-import { LoadIcon, LoadingIcon } from "@/components/bs-icons/loading";
+import { LoadingIcon } from "@/components/bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { bsConfirm } from "@/components/bs-ui/alertDialog/useConfirm";
 import { Button } from "@/components/bs-ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/bs-ui/dialog";
@@ -234,7 +235,7 @@ export default function KnowledgeModel({ llmOptions, embeddings, onBack }) {
                     disabled={saveload}
                     onClick={handleSave}
                 >
-                    {saveload && <LoadIcon className="mr-2" />}
+                    {saveload && <Loading className="mr-2 h-4 w-4 text-muted-foreground" />}
                     {t('save')}
                 </Button>
             </div>

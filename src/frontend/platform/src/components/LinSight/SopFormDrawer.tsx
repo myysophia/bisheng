@@ -2,7 +2,7 @@
 import { Sheet, SheetContent, SheetTitle } from "@/components/bs-ui/sheet";
 import { Button } from '../bs-ui/button';
 import { useState, useRef, useEffect } from 'react';
-import { LoadIcon } from "../bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { Input, Textarea } from "../bs-ui/input";
 import SopMarkdown from "./SopMarkdown";
 import { useToast } from "@/components/bs-ui/toast/use-toast";
@@ -215,7 +215,7 @@ const SopFormDrawer = ({
                 >
                   {isSubmitting ? (
                     <>
-                      <LoadIcon className="animate-spin mr-2" />
+                      <Loading className="mr-2 h-4 w-4 text-muted-foreground" />
                       保存中...
                     </>
                   ) : (

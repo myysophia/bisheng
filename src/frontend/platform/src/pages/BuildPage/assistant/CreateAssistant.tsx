@@ -4,7 +4,7 @@ import { uploadFileWithProgress } from "@/modals/UploadModal/upload";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { LoadIcon } from "../../../components/bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { Button } from "../../../components/bs-ui/button";
 import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../components/bs-ui/dialog";
 import { Input, Textarea } from "../../../components/bs-ui/input";
@@ -131,8 +131,9 @@ ${t('build.exampleTwo')}
                 <Button variant="outline" className="px-11" type="button" onClick={() => setFormData({ name: '', roleAndTasks: '' })}>{t('cancle')}</Button>
             </DialogClose>
             <Button disabled={loading} type="submit" className="px-11" onClick={handleSubmit}>
-                {loading && <LoadIcon className="mr-2" />}
-                {t('build.create')}</Button>
+                {loading && <Loading className="mr-2 h-4 w-4 text-muted-foreground" />}
+                {t('build.create')}
+            </Button>
         </DialogFooter>
     </DialogContent>
 };

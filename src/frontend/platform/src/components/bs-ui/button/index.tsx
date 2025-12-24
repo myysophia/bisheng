@@ -2,7 +2,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cname } from "../utils"
-import { LoadIcon } from "@/components/bs-icons"
+import Loading from "@/components/ui/loading";
 const buttonVariants = cva(
     "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
     {
@@ -103,7 +103,12 @@ ButtonNumber.displayName = "ButtonNumber"
 
 const LoadButton = React.forwardRef<HTMLButtonElement, ButtonProps & { loading?: boolean }>(
     ({ loading = false, disabled = false, ...props }, ref) => {
-        return <Button {...props} disabled={loading || disabled} ref={ref}>{loading && <LoadIcon className="mr-1" />}{props.children}</Button>
+        return (
+            <Button {...props} disabled={loading || disabled} ref={ref}>
+                {loading && <Loading className="mr-1 h-4 w-4 text-muted-foreground" />}
+                {props.children}
+            </Button>
+        )
     }
 )
 

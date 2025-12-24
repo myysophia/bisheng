@@ -1,4 +1,4 @@
-import { LoadIcon } from "@/components/bs-icons/loading";
+import Loading from "@/components/ui/loading";
 import { bsConfirm } from "@/components/bs-ui/alertDialog/useConfirm";
 import { Button } from "@/components/bs-ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/bs-ui/dialog";
@@ -435,7 +435,7 @@ const McpServerEditorDialog = forwardRef(({ existingNames = [], onReload }, ref)
                             取消
                         </Button>
                         <Button disabled={isLoading} onClick={handleSubmit}>
-                            {isLoading && <LoadIcon className="mr-1" />}
+                            {isLoading && <Loading className="mr-1 h-4 w-4 text-muted-foreground" />}
                             保存
                         </Button>
                     </SheetFooter>
