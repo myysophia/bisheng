@@ -304,3 +304,8 @@ src/frontend/client/validate-components.cjs
 src/frontend/platform/src/pages/SkillChatPage.tsx
 
 .codex_local
+
+.autonomous/*
+"Bisheng\346\223\215\344\275\234\346\211\213\345\206\214.docx"
+"Bisheng\346\223\215\344\275\234\346\211\213\345\206\214.md"
+"Bisheng\346\223\215\344\275\234\346\211\213\345\206\214_\345\267\262\344\277\256\345\244\215.docx"
