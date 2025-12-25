@@ -54,7 +54,7 @@ export default function InvitationCodeForm({ showCode, setShowCode }) {
                     <div className="" style={{ backgroundImage: `url('${__APP_ENV__.BASE_URL}/assets/diandian.png')` }}>
                         <div className="text-2xl font-bold text-primary pt-20 pl-8">Linsight 邀请码</div>
                         {/* Description */}
-                        <p className="text-sm mt-3 pl-8">输入 BISHENG 提供的邀请码，开启你的灵思之旅。</p>
+                        <p className="text-sm mt-3 pl-8">输入 E-Agent 提供的邀请码，开启你的灵思之旅。</p>
                     </div>
 
                     {/* Form */}

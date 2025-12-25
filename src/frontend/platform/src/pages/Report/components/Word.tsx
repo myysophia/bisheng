@@ -30,7 +30,7 @@ export default function Word({ data, workflow }) {
             // 文档地址，绝对路径
             url: data.path,
             // 文档标题
-            title: 'bisheng.docx',
+            title: 'E-Agent.docx',
             permissions: {
                 changeHistory: true,
                 comment: true,
@@ -112,4 +112,3 @@ export default function Word({ data, workflow }) {
         <div id="bsoffice"></div>
     </div>
 };
-

@@ -76,7 +76,7 @@ const ChatForm = ({ isLingsi, setShowCode, index = 0 }) => {
     submitButtonRef,
     setIsScrollable,
     disabled: !!(requiresKey ?? false),
-    placeholder: isLingsi ? (bsConfig?.linsightConfig?.input_placeholder || '请输入你的任务目标，然后交给 BISHENG 灵思') : bsConfig?.inputPlaceholder
+    placeholder: isLingsi ? (bsConfig?.linsightConfig?.input_placeholder || '请输入你的任务目标，然后交给 E-Agent 灵思') : bsConfig?.inputPlaceholder
   });
 
   const {
@@ -386,4 +386,3 @@ const ModelSelect = ({ options, value, onChange }: { options?: BsConfig['models'
 
 
 export default memo(ChatForm);
-

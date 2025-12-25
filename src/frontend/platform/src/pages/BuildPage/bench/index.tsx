@@ -339,7 +339,7 @@ export default function index({ formData: parentFormData, setFormData: parentSet
                                     isTextarea
                                     value={formData.systemPrompt}
                                     error={errors.systemPrompt}
-                                    placeholder="你是毕昇 AI 助手"
+                                    placeholder="你是 E-Agent AI 助手"
                                     maxLength={30000}
                                     onChange={(val) => setFormData(prev => ({
                                         ...prev,
@@ -468,7 +468,7 @@ interface UseChatConfigProps {
 const useChatConfig = (refs: UseChatConfigProps, parentFormData, parentSetFormData) => {
     const [formData, setFormData] = useState<ChatConfigForm>(parentFormData || {
         menuShow: true,
-        systemPrompt: '你是毕昇 AI 助手',
+        systemPrompt: '你是 E-Agent AI 助手',
         sidebarIcon: { enabled: true, image: '', relative_path: '' },
         assistantIcon: { enabled: true, image: '', relative_path: '' },
         sidebarSlogan: '',

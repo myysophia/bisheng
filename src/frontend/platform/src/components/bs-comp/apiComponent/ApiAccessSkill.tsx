@@ -131,7 +131,7 @@ const ApiAccessSkill = ({ }) => {
     },
     "ChatOpenAI-7f49c": {},
     "ElasticKeywordsSearch-0d2c8": {},
-    "BishengRetrievalQA-7e0ae": {}
+    "E-AgentRetrievalQA-7e0ae": {}
   },
   "history_count": 10,
   "clear_cache": false

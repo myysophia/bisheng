@@ -353,7 +353,7 @@ export default function MainLayout() {
                 <div className="flex items-center">
                     <Link className="inline-block" to='/education'>
                         {/* @ts-ignore */}
-                        <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="h-8 rounded" alt="Bisheng" />
+                        <img src={__APP_ENV__.BASE_URL + '/login-logo-small.png'} className="h-8 rounded" alt="E-Agent" />
                     </Link>
                 </div>
                 <div>
