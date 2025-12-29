@@ -183,6 +183,8 @@ export const LoginPage = () => {
                     role: res.role
                 };
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                // 同步写入工作区客户端使用的 user 缓存，避免首次跳转被判定未登录
+                localStorage.setItem('user', JSON.stringify(userInfo));
 
                 const redirectParam = new URLSearchParams(window.location.search).get('redirect');
                 if (redirectParam) {
