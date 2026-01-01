@@ -64,7 +64,8 @@ const enum MenuType {
     BUILD = 'build',
     KNOWLEDGE = 'knowledge',
     MODEL = 'model',
-    EVALUATION = 'evaluation'
+    EVALUATION = 'evaluation',
+    EDUCATION = 'education'
 }
 // -1 id表示新增
 export default function EditRole({ id, name, groupId, onChange, onBeforeChange }) {
@@ -198,6 +199,12 @@ export default function EditRole({ id, name, groupId, onChange, onBeforeChange }
                             <TableCell className="font-medium">{t('menu.knowledge')}</TableCell>
                             <TableCell className="text-center">
                                 <Switch checked={form.useMenu.includes(MenuType.KNOWLEDGE)} onCheckedChange={(bln) => switchDataChange(MenuType.KNOWLEDGE, 'useMenu', bln)} />
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell className="font-medium">{t('menu.education')}</TableCell>
+                            <TableCell className="text-center">
+                                <Switch checked={form.useMenu.includes(MenuType.EDUCATION)} onCheckedChange={(bln) => switchDataChange(MenuType.EDUCATION, 'useMenu', bln)} />
                             </TableCell>
                         </TableRow>
                         <TableRow>

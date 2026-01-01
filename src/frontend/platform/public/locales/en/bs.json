@@ -30,6 +30,7 @@
     "app": "Chat",
     "skills": "Build",
     "knowledge": "Knowledge",
+    "education": "Agent Education",
     "evaluation": "Evaluation",
     "annotation": "Annotation",
     "models": "Models",
